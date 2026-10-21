@@ -102,7 +102,7 @@ class ManageUsersScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.primarySoft,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.primaryLight.withOpacity(0.3)),
+                            border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.3)),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<UserRole>(

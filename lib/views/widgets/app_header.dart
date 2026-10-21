@@ -63,7 +63,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
 
           // Custom actions
-          if (actions != null) ...actions!,
+          ...?actions,
 
           // Role Switcher Button
           if (user != null) ...[
@@ -75,7 +75,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                 decoration: BoxDecoration(
                   color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primaryLight.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

@@ -110,7 +110,7 @@ class HomeScreen extends StatelessWidget {
                             'Hôm nay bạn muốn thử thách bản thân với đề thi nào? Ôn luyện ngay để củng cố kiến thức.',
                             style: TextStyle(
                               fontSize: isMobile ? 13 : 15,
-                              color: Colors.white.withOpacity(0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               height: 1.4,
                             ),
                           ),
@@ -152,7 +152,7 @@ class HomeScreen extends StatelessWidget {
                         width: 140,
                         height: 140,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
+                          color: Colors.white.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(

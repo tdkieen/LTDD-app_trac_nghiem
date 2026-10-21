@@ -161,7 +161,7 @@ class OverallLeaderboardScreen extends StatelessWidget {
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
         ),
-        border: Border.all(color: color.withOpacity(0.5), width: rank == 1 ? 2 : 1),
+        border: Border.all(color: color.withValues(alpha: 0.5), width: rank == 1 ? 2 : 1),
         boxShadow: const [
           BoxShadow(color: Color(0x06000000), blurRadius: 10, offset: Offset(0, -2)),
         ],

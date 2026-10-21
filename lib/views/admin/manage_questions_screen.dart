@@ -131,7 +131,7 @@ class _ManageQuestionsScreenState extends State<ManageQuestionsScreen> {
                                 const Text('Đáp án đúng *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                 const SizedBox(height: 4),
                                 DropdownButtonFormField<String>(
-                                  value: correctAns,
+                                  initialValue: correctAns,
                                   decoration: const InputDecoration(),
                                   items: ['A', 'B', 'C', 'D'].map((k) => DropdownMenuItem(value: k, child: Text('Phương án $k'))).toList(),
                                   onChanged: (v) => setDialogState(() => correctAns = v!),
@@ -147,7 +147,7 @@ class _ManageQuestionsScreenState extends State<ManageQuestionsScreen> {
                                 const Text('Mức độ khó', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                 const SizedBox(height: 4),
                                 DropdownButtonFormField<String>(
-                                  value: diff,
+                                  initialValue: diff,
                                   decoration: const InputDecoration(),
                                   items: ['Dễ', 'Trung bình', 'Khó'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
                                   onChanged: (v) => setDialogState(() => diff = v!),

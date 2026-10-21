@@ -225,7 +225,7 @@ class WebSidebar extends StatelessWidget {
             color: isActive ? AppColors.primarySoft : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             border: isActive
-                ? Border.all(color: AppColors.primaryLight.withOpacity(0.3), width: 1)
+                ? Border.all(color: AppColors.primaryLight.withValues(alpha: 0.3), width: 1)
                 : null,
           ),
           child: Row(

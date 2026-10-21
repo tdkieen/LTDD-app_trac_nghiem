@@ -144,7 +144,7 @@ class ExamListScreen extends StatelessWidget {
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 200),
                           child: DropdownButtonFormField<int?>(
-                            value: quiz.selectedCategoryId,
+                            initialValue: quiz.selectedCategoryId,
                             isExpanded: true,
                             decoration: const InputDecoration(
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),

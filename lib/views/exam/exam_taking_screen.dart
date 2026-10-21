@@ -74,7 +74,7 @@ class _ExamTakingScreenState extends State<ExamTakingScreen> with WidgetsBinding
                 decoration: BoxDecoration(
                   color: AppColors.warningSoft,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.warning.withOpacity(0.4)),
+                  border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   children: [
@@ -378,7 +378,7 @@ class _ExamTakingScreenState extends State<ExamTakingScreen> with WidgetsBinding
                   decoration: BoxDecoration(
                     color: AppColors.difficultyBg(question.mucDoKho),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.difficultyColor(question.mucDoKho).withOpacity(0.3)),
+                    border: Border.all(color: AppColors.difficultyColor(question.mucDoKho).withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     question.mucDoKho!,
@@ -572,7 +572,7 @@ class _ExamTakingScreenState extends State<ExamTakingScreen> with WidgetsBinding
               decoration: BoxDecoration(
                 color: AppColors.primarySoft,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.primaryLight.withOpacity(0.4)),
+                border: Border.all(color: AppColors.primaryLight.withValues(alpha: 0.4)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

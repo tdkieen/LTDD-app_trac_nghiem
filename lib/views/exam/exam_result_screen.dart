@@ -195,7 +195,7 @@ class ExamResultScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   DateFormat('dd/MM/yyyy HH:mm').format(result.ngayThi),
-                  style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12),
                 ),
               ],
             ),
@@ -427,7 +427,7 @@ class ExamResultScreen extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: item.laDung ? AppColors.success.withOpacity(0.5) : AppColors.danger.withOpacity(0.5),
+          color: item.laDung ? AppColors.success.withValues(alpha: 0.5) : AppColors.danger.withValues(alpha: 0.5),
           width: 1.5,
         ),
       ),

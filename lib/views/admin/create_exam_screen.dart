@@ -191,7 +191,7 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
                             const Text('Chủ đề môn học *', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<int>(
-                              value: _selectedCategory,
+                              initialValue: _selectedCategory,
                               decoration: const InputDecoration(),
                               items: categories.map((cat) {
                                 return DropdownMenuItem(
@@ -216,7 +216,7 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
                             const Text('Mức độ khó', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                             const SizedBox(height: 8),
                             DropdownButtonFormField<String>(
-                              value: _selectedDifficulty,
+                              initialValue: _selectedDifficulty,
                               decoration: const InputDecoration(),
                               items: ['Dễ', 'Trung bình', 'Khó'].map((diff) {
                                 return DropdownMenuItem(

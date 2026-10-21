@@ -101,7 +101,7 @@ class NotificationDialog extends StatelessWidget {
                             }
                           },
                           child: Container(
-                            color: notif.daDoc ? Colors.transparent : AppColors.primarySoft.withOpacity(0.4),
+                            color: notif.daDoc ? Colors.transparent : AppColors.primarySoft.withValues(alpha: 0.4),
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,

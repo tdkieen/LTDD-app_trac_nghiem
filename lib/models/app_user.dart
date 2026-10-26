@@ -36,6 +36,7 @@ class AppUser {
   final String userName;
   final String fullName;
   final String email;
+  final String password;
   final String? phoneNumber;
   final String? avatarUrl;
   final UserRole role;
@@ -47,6 +48,7 @@ class AppUser {
     required this.userName,
     required this.fullName,
     required this.email,
+    this.password = '123456',
     this.phoneNumber,
     this.avatarUrl,
     this.role = UserRole.student,
@@ -63,6 +65,7 @@ class AppUser {
     String? userName,
     String? fullName,
     String? email,
+    String? password,
     String? phoneNumber,
     String? avatarUrl,
     UserRole? role,
@@ -74,6 +77,7 @@ class AppUser {
       userName: userName ?? this.userName,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
+      password: password ?? this.password,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       role: role ?? this.role,
@@ -87,6 +91,7 @@ class AppUser {
     'userName': userName,
     'fullName': fullName,
     'email': email,
+    'password': password,
     'phoneNumber': phoneNumber,
     'avatarUrl': avatarUrl,
     'role': role.name,
@@ -99,6 +104,7 @@ class AppUser {
     userName: json['userName'] ?? '',
     fullName: json['fullName'] ?? '',
     email: json['email'] ?? '',
+    password: json['password'] ?? '123456',
     phoneNumber: json['phoneNumber'],
     avatarUrl: json['avatarUrl'],
     role: UserRole.fromString(json['role']),

@@ -5,13 +5,11 @@ import '../services/quiz_repository.dart';
 class AuthProvider extends ChangeNotifier {
   final QuizRepository _repo = QuizRepository();
   AppUser? _currentUser;
+  String? _errorMessage;
 
   AuthProvider() {
-    // Default to the first student user (Duy Kì)
-    final users = _repo.getUsers();
-    if (users.isNotEmpty) {
-      _currentUser = users.first;
-    }
+    // Start unauthenticated so user sees login/register screen
+    _currentUser = null;
   }
 
   AppUser? get currentUser => _currentUser;
@@ -19,9 +17,16 @@ class AuthProvider extends ChangeNotifier {
   bool get isAdmin => _currentUser?.isAdmin ?? false;
   bool get isTeacher => _currentUser?.isTeacher ?? false;
   bool get isStudent => _currentUser?.isStudent ?? true;
+  String? get errorMessage => _errorMessage;
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
 
   void switchUser(AppUser user) {
     _currentUser = user;
+    _errorMessage = null;
     notifyListeners();
   }
 
@@ -30,6 +35,93 @@ class AuthProvider extends ChangeNotifier {
     _currentUser = _currentUser!.copyWith(role: newRole);
     _repo.updateUser(_currentUser!);
     notifyListeners();
+  }
+
+  bool login(String usernameOrEmail, String password) {
+    _errorMessage = null;
+    final trimmedUser = usernameOrEmail.trim();
+    final trimmedPass = password.trim();
+
+    if (trimmedUser.isEmpty || trimmedPass.isEmpty) {
+      _errorMessage = 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu';
+      notifyListeners();
+      return false;
+    }
+
+    final user = _repo.authenticate(trimmedUser, trimmedPass);
+    if (user != null) {
+      _currentUser = user;
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } else {
+      _errorMessage = 'Tên đăng nhập hoặc mật khẩu không chính xác';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  bool register({
+    required String userName,
+    required String email,
+    required String password,
+    required String fullName,
+    String? phoneNumber,
+    UserRole role = UserRole.student,
+  }) {
+    _errorMessage = null;
+    final u = userName.trim();
+    final e = email.trim();
+    final p = password.trim();
+    final name = fullName.trim();
+
+    if (u.isEmpty || e.isEmpty || p.isEmpty || name.isEmpty) {
+      _errorMessage = 'Vui lòng điền đầy đủ các thông tin bắt buộc';
+      notifyListeners();
+      return false;
+    }
+
+    if (p.length < 6) {
+      _errorMessage = 'Mật khẩu phải có tối thiểu 6 ký tự';
+      notifyListeners();
+      return false;
+    }
+
+    if (_repo.isUsernameTaken(u)) {
+      _errorMessage = 'Tên đăng nhập "$u" đã tồn tại';
+      notifyListeners();
+      return false;
+    }
+
+    if (_repo.isEmailTaken(e)) {
+      _errorMessage = 'Email "$e" đã được đăng ký';
+      notifyListeners();
+      return false;
+    }
+
+    final newUser = AppUser(
+      id: 'u_${DateTime.now().millisecondsSinceEpoch}',
+      userName: u,
+      fullName: name,
+      email: e,
+      password: p,
+      phoneNumber: phoneNumber?.trim(),
+      role: role,
+      diemMucTieu: 8.0,
+      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    );
+
+    final success = _repo.addUser(newUser);
+    if (success) {
+      _currentUser = newUser;
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } else {
+      _errorMessage = 'Không thể tạo tài khoản, vui lòng thử lại';
+      notifyListeners();
+      return false;
+    }
   }
 
   void updateProfile({
@@ -49,26 +141,7 @@ class AuthProvider extends ChangeNotifier {
 
   void logout() {
     _currentUser = null;
-    notifyListeners();
-  }
-
-  void login(String userName) {
-    final users = _repo.getUsers();
-    try {
-      _currentUser = users.firstWhere(
-        (u) => u.userName.toLowerCase() == userName.toLowerCase().trim() ||
-               u.email.toLowerCase() == userName.toLowerCase().trim(),
-      );
-    } catch (_) {
-      // Create guest student
-      _currentUser = AppUser(
-        id: 'u_${DateTime.now().millisecondsSinceEpoch}',
-        userName: userName,
-        fullName: userName,
-        email: '$userName@edutech.vn',
-        role: UserRole.student,
-      );
-    }
+    _errorMessage = null;
     notifyListeners();
   }
 }

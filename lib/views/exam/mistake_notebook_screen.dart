@@ -40,43 +40,77 @@ class MistakeNotebookScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Top Action Row
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Sổ Tay Câu Hỏi Sai',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Bạn đang có ${mistakes.length} câu hỏi cần được ôn tập lại',
-                          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (validMistakeQuestions.isNotEmpty)
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        onPracticeMistakes(validMistakeQuestions, 'Luyện tập câu sai trong sổ tay');
-                      },
-                      icon: const Icon(Icons.fitness_center, size: 18),
-                      label: const Text('Ôn tập tất cả'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              if (isMobile)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Sổ Tay Câu Hỏi Sai',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                ],
-              ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Bạn đang có ${mistakes.length} câu hỏi cần được ôn tập lại',
+                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    ),
+                    if (validMistakeQuestions.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          onPracticeMistakes(validMistakeQuestions, 'Luyện tập câu sai trong sổ tay');
+                        },
+                        icon: const Icon(Icons.fitness_center, size: 18),
+                        label: const Text('Ôn tập tất cả'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        ),
+                      ),
+                    ],
+                  ],
+                )
+              else
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Sổ Tay Câu Hỏi Sai',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Bạn đang có ${mistakes.length} câu hỏi cần được ôn tập lại',
+                            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (validMistakeQuestions.isNotEmpty)
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          onPracticeMistakes(validMistakeQuestions, 'Luyện tập câu sai trong sổ tay');
+                        },
+                        icon: const Icon(Icons.fitness_center, size: 18),
+                        label: const Text('Ôn tập tất cả'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        ),
+                      ),
+                  ],
+                ),
 
               const SizedBox(height: 24),
 
@@ -127,36 +161,44 @@ class MistakeNotebookScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Top row: Mistakes count pill + Last wrong date + Delete button
-                        Row(
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 6,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.dangerSoft,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.warning, size: 14, color: AppColors.danger),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Sai ${m.lanSai} lần',
-                                    style: const TextStyle(
-                                      color: AppColors.danger,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.dangerSoft,
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
-                                ],
-                              ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.warning, size: 14, color: AppColors.danger),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Sai ${m.lanSai} lần',
+                                        style: const TextStyle(
+                                          color: AppColors.danger,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Lần cuối: $timeStr',
+                                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Lần cuối: $timeStr',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-                            ),
-                            const Spacer(),
                             TextButton.icon(
                               onPressed: () {
                                 quiz.deleteMistake(m.id);
@@ -164,7 +206,12 @@ class MistakeNotebookScreen extends StatelessWidget {
                                   const SnackBar(content: Text('Đã gỡ câu hỏi khỏi sổ tay.')),
                                 );
                               },
-                              icon: const Icon(Icons.check, size: 16, color: AppColors.success),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              icon: const Icon(Icons.check, size: 15, color: AppColors.success),
                               label: const Text('Đã hiểu / Xóa', style: TextStyle(color: AppColors.success, fontSize: 12)),
                             ),
                           ],

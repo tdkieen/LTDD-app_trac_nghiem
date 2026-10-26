@@ -4,6 +4,8 @@ import '../../core/responsive/responsive_layout.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/de_thi.dart';
 import '../../providers/quiz_provider.dart';
+import '../widgets/question_media_view.dart';
+import 'add_question_sheet.dart';
 
 class ManageQuestionsScreen extends StatefulWidget {
   final int initialExamId;
@@ -29,194 +31,29 @@ class _ManageQuestionsScreenState extends State<ManageQuestionsScreen> {
   }
 
   void _showAddQuestionDialog(BuildContext context, DeThi exam) {
-    final formKey = GlobalKey<FormState>();
-    final qContentCtrl = TextEditingController();
-    final optACtrl = TextEditingController();
-    final optBCtrl = TextEditingController();
-    final optCCtrl = TextEditingController();
-    final optDCtrl = TextEditingController();
-    final explainCtrl = TextEditingController();
-    String correctAns = 'A';
-    String diff = 'Trung bình';
-    bool isAudio = false;
-
-    showDialog(
-      context: context,
-      builder: (dialogCtx) => StatefulBuilder(
-        builder: (context, setDialogState) => Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 620, maxHeight: 720),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.add_circle, color: AppColors.primary),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Thêm Câu Hỏi Mới',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const Spacer(),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => Navigator.pop(dialogCtx),
-                          ),
-                        ],
-                      ),
-                      const Divider(),
-                      const SizedBox(height: 12),
-
-                      const Text('Nội dung câu hỏi *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: qContentCtrl,
-                        maxLines: 2,
-                        decoration: const InputDecoration(hintText: 'Nhập nội dung câu hỏi...'),
-                        validator: (v) => v == null || v.trim().isEmpty ? 'Không được để trống' : null,
-                      ),
-                      const SizedBox(height: 14),
-
-                      // 4 Options
-                      const Text('Phương án A *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      const SizedBox(height: 4),
-                      TextFormField(
-                        controller: optACtrl,
-                        decoration: const InputDecoration(hintText: 'Phương án A'),
-                        validator: (v) => v == null || v.trim().isEmpty ? 'Nhập phương án A' : null,
-                      ),
-                      const SizedBox(height: 8),
-
-                      const Text('Phương án B *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      const SizedBox(height: 4),
-                      TextFormField(
-                        controller: optBCtrl,
-                        decoration: const InputDecoration(hintText: 'Phương án B'),
-                        validator: (v) => v == null || v.trim().isEmpty ? 'Nhập phương án B' : null,
-                      ),
-                      const SizedBox(height: 8),
-
-                      const Text('Phương án C *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      const SizedBox(height: 4),
-                      TextFormField(
-                        controller: optCCtrl,
-                        decoration: const InputDecoration(hintText: 'Phương án C'),
-                        validator: (v) => v == null || v.trim().isEmpty ? 'Nhập phương án C' : null,
-                      ),
-                      const SizedBox(height: 8),
-
-                      const Text('Phương án D *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      const SizedBox(height: 4),
-                      TextFormField(
-                        controller: optDCtrl,
-                        decoration: const InputDecoration(hintText: 'Phương án D'),
-                        validator: (v) => v == null || v.trim().isEmpty ? 'Nhập phương án D' : null,
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Correct Answer & Difficulty
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Đáp án đúng *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                const SizedBox(height: 4),
-                                DropdownButtonFormField<String>(
-                                  initialValue: correctAns,
-                                  decoration: const InputDecoration(),
-                                  items: ['A', 'B', 'C', 'D'].map((k) => DropdownMenuItem(value: k, child: Text('Phương án $k'))).toList(),
-                                  onChanged: (v) => setDialogState(() => correctAns = v!),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Mức độ khó', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                const SizedBox(height: 4),
-                                DropdownButtonFormField<String>(
-                                  initialValue: diff,
-                                  decoration: const InputDecoration(),
-                                  items: ['Dễ', 'Trung bình', 'Khó'].map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
-                                  onChanged: (v) => setDialogState(() => diff = v!),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Audio question toggle
-                      SwitchListTile(
-                        title: const Text('Là câu hỏi nghe (Audio TOEIC)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                        value: isAudio,
-                        contentPadding: EdgeInsets.zero,
-                        onChanged: (val) => setDialogState(() => isAudio = val),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Explanation note
-                      const Text('Lời giải thích', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      const SizedBox(height: 4),
-                      TextFormField(
-                        controller: explainCtrl,
-                        maxLines: 2,
-                        decoration: const InputDecoration(hintText: 'Giải thích tại sao đáp án này đúng...'),
-                      ),
-
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          OutlinedButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Hủy')),
-                          const SizedBox(width: 12),
-                          ElevatedButton(
-                            onPressed: () {
-                              if (!formKey.currentState!.validate()) return;
-                              context.read<QuizProvider>().addQuestion(
-                                maDeThi: exam.maDeThi,
-                                maChuDe: exam.maChuDe,
-                                noiDung: qContentCtrl.text.trim(),
-                                phuongAnA: optACtrl.text.trim(),
-                                phuongAnB: optBCtrl.text.trim(),
-                                phuongAnC: optCCtrl.text.trim(),
-                                phuongAnD: optDCtrl.text.trim(),
-                                dapAnDung: correctAns,
-                                mucDoKho: diff,
-                                laCauHoiNghe: isAudio,
-                                audioPath: isAudio ? 'sample_audio.mp3' : null,
-                                giaiThich: explainCtrl.text.trim().isNotEmpty ? explainCtrl.text.trim() : null,
-                              );
-                              Navigator.pop(dialogCtx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Thêm câu hỏi thành công!')),
-                              );
-                            },
-                            child: const Text('Lưu câu hỏi'),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+    AddQuestionSheet.show(
+      context,
+      exam: exam,
+      onSave: (newQ) {
+        context.read<QuizProvider>().addQuestion(
+          maDeThi: newQ.maDeThi ?? exam.maDeThi,
+          maChuDe: newQ.maChuDe,
+          noiDung: newQ.noiDung,
+          phuongAnA: newQ.phuongAnA ?? '',
+          phuongAnB: newQ.phuongAnB ?? '',
+          phuongAnC: newQ.phuongAnC ?? '',
+          phuongAnD: newQ.phuongAnD ?? '',
+          dapAnDung: newQ.dapAnDung ?? 'A',
+          mucDoKho: newQ.mucDoKho ?? 'Trung bình',
+          laCauHoiNghe: newQ.laCauHoiNghe,
+          audioPath: newQ.audioPath,
+          imagePath: newQ.imagePath,
+          giaiThich: newQ.giaiThich,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thêm câu hỏi mới thành công!')),
+        );
+      },
     );
   }
 
@@ -387,6 +224,10 @@ class _ManageQuestionsScreenState extends State<ManageQuestionsScreen> {
                           ),
                           const SizedBox(height: 10),
                           Text(q.noiDung, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                          if (q.imagePath != null && q.imagePath!.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            QuestionImageView(imagePath: q.imagePath!, maxHeight: 150),
+                          ],
                           const SizedBox(height: 12),
                           Wrap(
                             spacing: 12,

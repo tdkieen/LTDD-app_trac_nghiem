@@ -141,6 +141,16 @@ class HomeScreen extends StatelessWidget {
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
                               ),
+                              OutlinedButton.icon(
+                                onPressed: () => onNavigate('create_exam'),
+                                icon: const Icon(Icons.add_circle_outline, size: 18, color: Colors.white),
+                                label: const Text('Tạo đề thi mới', style: TextStyle(color: Colors.white)),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Colors.white70, width: 1.5),
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                ),
+                              ),
                             ],
                           ),
                         ],

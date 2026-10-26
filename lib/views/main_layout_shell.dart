@@ -5,8 +5,10 @@ import '../core/theme/app_colors.dart';
 import '../models/cau_hoi.dart';
 import '../models/de_thi.dart';
 import '../models/ket_qua_thi.dart';
+import '../providers/auth_provider.dart';
 import '../providers/exam_session_provider.dart';
 import '../providers/quiz_provider.dart';
+import 'auth/auth_screen.dart';
 import 'admin/create_exam_screen.dart';
 import 'admin/manage_categories_screen.dart';
 import 'admin/manage_questions_screen.dart';
@@ -185,6 +187,7 @@ class _MainLayoutShellState extends State<MainLayoutShell> {
           editingExam: _editingExam,
           onSaved: () => _navigateTo('exams'),
           onCancel: () => _navigateTo('exams'),
+          onManageQuestions: (examId) => _navigateTo('manage_questions_$examId'),
         );
       case 'manage_questions':
         return ManageQuestionsScreen(
@@ -209,6 +212,11 @@ class _MainLayoutShellState extends State<MainLayoutShell> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    if (!auth.isAuthenticated) {
+      return const AuthScreen();
+    }
+
     final isMobile = ResponsiveLayout.isMobile(context);
 
     // If currently taking an exam, show full screen taking view without sidebars

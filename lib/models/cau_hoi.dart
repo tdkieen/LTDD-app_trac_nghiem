@@ -11,6 +11,7 @@ class CauHoi {
   final int? maDeThi;
   final String? audioPath;
   final bool laCauHoiNghe;
+  final String? imagePath;
   final String? giaiThich;
 
   CauHoi({
@@ -26,6 +27,7 @@ class CauHoi {
     this.maDeThi,
     this.audioPath,
     this.laCauHoiNghe = false,
+    this.imagePath,
     this.giaiThich,
   });
 
@@ -57,6 +59,7 @@ class CauHoi {
     int? maDeThi,
     String? audioPath,
     bool? laCauHoiNghe,
+    String? imagePath,
     String? giaiThich,
   }) {
     return CauHoi(
@@ -72,6 +75,7 @@ class CauHoi {
       maDeThi: maDeThi ?? this.maDeThi,
       audioPath: audioPath ?? this.audioPath,
       laCauHoiNghe: laCauHoiNghe ?? this.laCauHoiNghe,
+      imagePath: imagePath ?? this.imagePath,
       giaiThich: giaiThich ?? this.giaiThich,
     );
   }
@@ -89,6 +93,7 @@ class CauHoi {
     'maDeThi': maDeThi,
     'audioPath': audioPath,
     'laCauHoiNghe': laCauHoiNghe,
+    'imagePath': imagePath,
     'giaiThich': giaiThich,
   };
 
@@ -105,6 +110,7 @@ class CauHoi {
     maDeThi: json['maDeThi'],
     audioPath: json['audioPath'],
     laCauHoiNghe: json['laCauHoiNghe'] ?? false,
+    imagePath: json['imagePath'],
     giaiThich: json['giaiThich'],
   );
 }

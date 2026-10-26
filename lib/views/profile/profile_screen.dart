@@ -5,7 +5,6 @@ import '../../core/responsive/responsive_layout.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/quiz_provider.dart';
-import '../widgets/role_switcher_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback onGoHome;
@@ -122,83 +121,184 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     BoxShadow(color: Color(0x06000000), blurRadius: 12, offset: Offset(0, 4)),
                   ],
                 ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 36,
-                      backgroundColor: AppColors.primary,
-                      child: Text(
-                        user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'U',
-                        style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                child: isMobile
+                    ? Column(
                         children: [
                           Row(
                             children: [
-                              Text(
-                                user.fullName,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(width: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primarySoft,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                              CircleAvatar(
+                                radius: 30,
+                                backgroundColor: AppColors.primary,
                                 child: Text(
-                                  user.role.displayName,
-                                  style: const TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 11,
-                                  ),
+                                  user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'U',
+                                  style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      spacing: 8,
+                                      runSpacing: 4,
+                                      children: [
+                                        Text(
+                                          user.fullName,
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primarySoft,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            user.role.displayName,
+                                            style: const TextStyle(
+                                              color: AppColors.primary,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 11,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(user.email, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                    const SizedBox(height: 2),
+                                    Text('Thành viên: $createdStr', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(user.email, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                          const SizedBox(height: 2),
-                          Text('Thành viên từ ngày: $createdStr', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                context.read<AuthProvider>().logout();
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.danger,
+                                side: const BorderSide(color: AppColors.danger),
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                              ),
+                              icon: const Icon(Icons.logout, size: 16),
+                              label: const Text('Đăng xuất'),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 36,
+                            backgroundColor: AppColors.primary,
+                            child: Text(
+                              user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'U',
+                              style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        user.fullName,
+                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primarySoft,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        user.role.displayName,
+                                        style: const TextStyle(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text(user.email, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                                const SizedBox(height: 2),
+                                Text('Thành viên từ ngày: $createdStr', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                              ],
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              context.read<AuthProvider>().logout();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.danger,
+                              side: const BorderSide(color: AppColors.danger),
+                            ),
+                            icon: const Icon(Icons.logout, size: 16),
+                            label: const Text('Đăng xuất'),
+                          ),
                         ],
                       ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => RoleSwitcherDialog.show(context),
-                      icon: const Icon(Icons.swap_horiz, size: 16),
-                      label: const Text('Đổi tài khoản'),
-                    ),
-                  ],
-                ),
               ),
 
               const SizedBox(height: 24),
 
               // Stats Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricBox('Số bài thi đã làm', '$totalExams', Icons.assignment_turned_in, AppColors.primary),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _buildMetricBox('Điểm trung bình', avgScore.toStringAsFixed(1), Icons.insights, AppColors.success),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _buildMetricBox('Điểm cao nhất', maxScore.toStringAsFixed(1), Icons.emoji_events, AppColors.warning),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: _buildMetricBox('Đề đã bookmark', '${bookmarks.length}', Icons.bookmark, AppColors.secondary),
-                  ),
-                ],
-              ),
+              if (isMobile)
+                Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: _buildMetricBox('Số bài thi', '$totalExams', Icons.assignment_turned_in, AppColors.primary)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildMetricBox('Điểm TB', avgScore.toStringAsFixed(1), Icons.insights, AppColors.success)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: _buildMetricBox('Điểm cao nhất', maxScore.toStringAsFixed(1), Icons.emoji_events, AppColors.warning)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildMetricBox('Đề đã bookmark', '${bookmarks.length}', Icons.bookmark, AppColors.secondary)),
+                      ],
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildMetricBox('Số bài thi đã làm', '$totalExams', Icons.assignment_turned_in, AppColors.primary),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: _buildMetricBox('Điểm trung bình', avgScore.toStringAsFixed(1), Icons.insights, AppColors.success),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: _buildMetricBox('Điểm cao nhất', maxScore.toStringAsFixed(1), Icons.emoji_events, AppColors.warning),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: _buildMetricBox('Đề đã bookmark', '${bookmarks.length}', Icons.bookmark, AppColors.secondary),
+                    ),
+                  ],
+                ),
 
               const SizedBox(height: 24),
 
@@ -218,9 +318,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Chỉnh sửa thông tin cá nhân',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          const Expanded(
+                            child: Text(
+                              'Chỉnh sửa thông tin cá nhân',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
                           ),
                           if (!_isEditing)
                             OutlinedButton.icon(

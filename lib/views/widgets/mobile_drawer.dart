@@ -83,6 +83,7 @@ class MobileDrawer extends StatelessWidget {
                 children: [
                   _buildItem(context, 'home', 'Trang chủ', Icons.home_outlined, Icons.home),
                   _buildItem(context, 'exams', 'Danh sách đề thi', Icons.assignment_outlined, Icons.assignment),
+                  _buildItem(context, 'create_exam', 'Tạo đề thi mới', Icons.add_circle_outline, Icons.add_circle),
                   _buildItem(context, 'history', 'Nhật ký học tập', Icons.history, Icons.history),
                   _buildItem(context, 'profile', 'Hồ sơ của tôi', Icons.person_outline, Icons.person),
                   _buildItem(context, 'bookmarks', 'Đề đã lưu', Icons.bookmark_outline, Icons.bookmark),
@@ -102,6 +103,17 @@ class MobileDrawer extends StatelessWidget {
                     _buildItem(context, 'manage_categories', 'Quản lý chủ đề', Icons.category_outlined, Icons.category),
                     _buildItem(context, 'manage_users', 'Quản lý người dùng', Icons.manage_accounts_outlined, Icons.manage_accounts),
                   ],
+
+                  const Divider(height: 24),
+                  ListTile(
+                    leading: const Icon(Icons.logout, color: AppColors.danger),
+                    title: const Text('Đăng xuất', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold, fontSize: 14)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.read<AuthProvider>().logout();
+                    },
+                  ),
                 ],
               ),
             ),

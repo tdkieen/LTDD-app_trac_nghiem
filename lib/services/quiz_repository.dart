@@ -76,6 +76,39 @@ class QuizRepository {
     }
   }
 
+  bool isUsernameTaken(String username) {
+    final query = username.trim().toLowerCase();
+    return _users.any((u) => u.userName.toLowerCase() == query);
+  }
+
+  bool isEmailTaken(String email) {
+    final query = email.trim().toLowerCase();
+    return _users.any((u) => u.email.toLowerCase() == query);
+  }
+
+  bool addUser(AppUser user) {
+    if (isUsernameTaken(user.userName) || isEmailTaken(user.email)) {
+      return false;
+    }
+    _users.add(user);
+    return true;
+  }
+
+  AppUser? authenticate(String usernameOrEmail, String password) {
+    final query = usernameOrEmail.trim().toLowerCase();
+    try {
+      final user = _users.firstWhere(
+        (u) => u.userName.toLowerCase() == query || u.email.toLowerCase() == query,
+      );
+      if (user.password == password.trim()) {
+        return user;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   bool updateUser(AppUser user) {
     final idx = _users.indexWhere((u) => u.id == user.id);
     if (idx != -1) {
@@ -239,6 +272,7 @@ class QuizRepository {
     String mucDoKho = 'Trung bình',
     bool laCauHoiNghe = false,
     String? audioPath,
+    String? imagePath,
     String? giaiThich,
   }) {
     final nextId = _questions.isEmpty
@@ -258,6 +292,7 @@ class QuizRepository {
       mucDoKho: mucDoKho,
       laCauHoiNghe: laCauHoiNghe,
       audioPath: audioPath,
+      imagePath: imagePath,
       giaiThich: giaiThich,
     );
     _questions.add(question);

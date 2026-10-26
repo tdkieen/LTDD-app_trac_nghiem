@@ -94,6 +94,12 @@ class WebSidebar extends StatelessWidget {
                   activeIcon: Icons.assignment,
                 ),
                 _buildMenuItem(
+                  id: 'create_exam',
+                  label: 'Tạo đề thi mới',
+                  icon: Icons.add_circle_outline,
+                  activeIcon: Icons.add_circle,
+                ),
+                _buildMenuItem(
                   id: 'history',
                   label: 'Nhật ký học tập',
                   icon: Icons.history,
@@ -156,6 +162,32 @@ class WebSidebar extends StatelessWidget {
                   ),
                 ],
               ],
+            ),
+          ),
+
+          // Logout button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            child: InkWell(
+              onTap: () => auth.logout(),
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: const Row(
+                  children: [
+                    Icon(Icons.logout, size: 18, color: AppColors.danger),
+                    SizedBox(width: 12),
+                    Text(
+                      'Đăng xuất',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.danger,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
 

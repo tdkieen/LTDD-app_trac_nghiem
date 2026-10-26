@@ -6,6 +6,8 @@ import '../../models/cau_hoi.dart';
 import '../../models/ket_qua_thi.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/exam_session_provider.dart';
+import '../widgets/listening_audio_player.dart';
+import '../widgets/question_media_view.dart';
 
 class ExamTakingScreen extends StatefulWidget {
   final VoidCallback onExit;
@@ -22,7 +24,6 @@ class ExamTakingScreen extends StatefulWidget {
 }
 
 class _ExamTakingScreenState extends State<ExamTakingScreen> with WidgetsBindingObserver {
-  bool _audioPlaying = false;
 
   @override
   void initState() {
@@ -422,50 +423,18 @@ class _ExamTakingScreenState extends State<ExamTakingScreen> with WidgetsBinding
             ),
           ),
 
-          // Audio player placeholder if listening question
+          // Question image illustration if present
+          if (question.imagePath != null && question.imagePath!.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            QuestionImageView(imagePath: question.imagePath!),
+          ],
+
+          // Audio player if listening question
           if (question.laCauHoiNghe) ...[
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceMuted,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(_audioPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled),
-                    color: AppColors.primary,
-                    iconSize: 36,
-                    onPressed: () {
-                      setState(() {
-                        _audioPlaying = !_audioPlaying;
-                      });
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'File nghe câu hỏi audio TOEIC',
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                        ),
-                        const SizedBox(height: 4),
-                        LinearProgressIndicator(
-                          value: _audioPlaying ? 0.45 : 0.0,
-                          backgroundColor: AppColors.border,
-                          color: AppColors.primary,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text('00:15 / 00:32', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
-                ],
-              ),
+            ListeningAudioPlayer(
+              key: ValueKey(question.maCauHoi),
+              question: question,
             ),
           ],
 

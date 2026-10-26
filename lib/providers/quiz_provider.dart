@@ -87,14 +87,14 @@ class QuizProvider extends ChangeNotifier {
   List<AppUser> getUsers() => _repo.getUsers();
 
   // Admin / Teacher operations
-  void addExam({
+  DeThi addExam({
     required String tenDeThi,
     required int maChuDe,
     required String mucDoKho,
     required int thoiGian,
     int soCauHoi = 10,
   }) {
-    _repo.addExam(
+    final created = _repo.addExam(
       tenDeThi: tenDeThi,
       maChuDe: maChuDe,
       mucDoKho: mucDoKho,
@@ -102,6 +102,7 @@ class QuizProvider extends ChangeNotifier {
       soCauHoi: soCauHoi,
     );
     notifyListeners();
+    return created;
   }
 
   void updateExam(DeThi exam) {
@@ -126,6 +127,7 @@ class QuizProvider extends ChangeNotifier {
     String mucDoKho = 'Trung bình',
     bool laCauHoiNghe = false,
     String? audioPath,
+    String? imagePath,
     String? giaiThich,
   }) {
     _repo.addQuestion(
@@ -140,6 +142,7 @@ class QuizProvider extends ChangeNotifier {
       mucDoKho: mucDoKho,
       laCauHoiNghe: laCauHoiNghe,
       audioPath: audioPath,
+      imagePath: imagePath,
       giaiThich: giaiThich,
     );
     notifyListeners();

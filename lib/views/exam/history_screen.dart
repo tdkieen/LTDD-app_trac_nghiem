@@ -34,34 +34,60 @@ class HistoryScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Nhật Ký Học Tập & Lịch Sử Thi',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+              if (isMobile)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Nhật Ký Học Tập',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tổng cộng ${historyList.length} lượt làm bài đã ghi nhận',
+                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: onGoExams,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Làm đề mới'),
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Nhật Ký Học Tập & Lịch Sử Thi',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tổng cộng ${historyList.length} lượt làm bài đã ghi nhận',
-                        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                      ),
-                    ],
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: onGoExams,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Làm đề mới'),
-                  ),
-                ],
-              ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Tổng cộng ${historyList.length} lượt làm bài đã ghi nhận',
+                          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: onGoExams,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Làm đề mới'),
+                    ),
+                  ],
+                ),
 
               const SizedBox(height: 24),
 
@@ -121,85 +147,182 @@ class HistoryScreen extends StatelessWidget {
                           BoxShadow(color: Color(0x04000000), blurRadius: 8, offset: Offset(0, 2)),
                         ],
                       ),
-                      child: Row(
-                        children: [
-                          // Score Circle
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: scoreBg,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: scoreColor, width: 2),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              score.toStringAsFixed(1),
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                                color: scoreColor,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-
-                          // Details
-                          Expanded(
-                            child: Column(
+                      child: isMobile
+                          ? Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  item.deThi?.tenDeThi ?? 'Bài thi #${item.maDeThi}',
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(Icons.schedule, size: 14, color: AppColors.textMuted),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      dateStr,
-                                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: scoreBg,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: scoreColor, width: 2),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        score.toStringAsFixed(1),
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                          color: scoreColor,
+                                        ),
+                                      ),
                                     ),
-                                    const SizedBox(width: 14),
-                                    const Icon(Icons.check_circle_outline, size: 14, color: AppColors.success),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${item.soCauDung}/${item.tongSoCau} câu đúng',
-                                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.deThi?.tenDeThi ?? 'Bài thi #${item.maDeThi}',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            dateStr,
+                                            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: AppColors.danger, size: 20),
+                                      tooltip: 'Xóa kết quả này',
+                                      onPressed: () {
+                                        quiz.deleteHistory(item.maKetQua);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Đã xóa kết quả làm bài khỏi nhật ký.')),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                const Divider(height: 1),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.check_circle_outline, size: 14, color: AppColors.success),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${item.soCauDung}/${item.tongSoCau} câu đúng',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                                        ),
+                                      ],
+                                    ),
+                                    OutlinedButton(
+                                      onPressed: () => onViewResult(item),
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: const Text('Xem lại', style: TextStyle(fontSize: 12)),
                                     ),
                                   ],
                                 ),
                               ],
-                            ),
-                          ),
+                            )
+                          : Row(
+                              children: [
+                                // Score Circle
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                    color: scoreBg,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: scoreColor, width: 2),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    score.toStringAsFixed(1),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      color: scoreColor,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
 
-                          // Actions: View Result + Delete
-                          OutlinedButton(
-                            onPressed: () => onViewResult(item),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                // Details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.deThi?.tenDeThi ?? 'Bài thi #${item.maDeThi}',
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Wrap(
+                                        spacing: 12,
+                                        runSpacing: 4,
+                                        children: [
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.schedule, size: 14, color: AppColors.textMuted),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                dateStr,
+                                                style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                              ),
+                                            ],
+                                          ),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.check_circle_outline, size: 14, color: AppColors.success),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${item.soCauDung}/${item.tongSoCau} câu đúng',
+                                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                // Actions: View Result + Delete
+                                OutlinedButton(
+                                  onPressed: () => onViewResult(item),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                  ),
+                                  child: const Text('Xem lại', style: TextStyle(fontSize: 12)),
+                                ),
+                                const SizedBox(width: 6),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, color: AppColors.danger, size: 20),
+                                  tooltip: 'Xóa kết quả này',
+                                  onPressed: () {
+                                    quiz.deleteHistory(item.maKetQua);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Đã xóa kết quả làm bài khỏi nhật ký.')),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
-                            child: const Text('Xem lại', style: TextStyle(fontSize: 12)),
-                          ),
-                          const SizedBox(width: 6),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, color: AppColors.danger, size: 20),
-                            tooltip: 'Xóa kết quả này',
-                            onPressed: () {
-                              quiz.deleteHistory(item.maKetQua);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Đã xóa kết quả làm bài khỏi nhật ký.')),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
                     );
                   },
                 ),

@@ -25,7 +25,6 @@ class HomeScreen extends StatelessWidget {
     final user = auth.currentUser;
     final isMobile = ResponsiveLayout.isMobile(context);
 
-    // Compute metrics
     final results = user != null ? quiz.getUserHistory(user.id) : [];
     final completedCount = results.length;
     final avgScore = completedCount > 0
@@ -46,24 +45,14 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Hero Banner
+              // Hero banner hiện đại, nhã và dễ đọc hơn, không dùng gradient quá chói.
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(isMobile ? 20 : 32),
+                padding: EdgeInsets.all(isMobile ? 22 : 28),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0D6EFD), Color(0xFF1E40AF)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: AppColors.primarySoft,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x220D6EFD),
-                      blurRadius: 20,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
+                  border: Border.all(color: AppColors.primary.withOpacity(0.15)),
                 ),
                 child: Row(
                   children: [
@@ -72,46 +61,48 @@ class HomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(20),
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: AppColors.border),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.flash_on, size: 14, color: Colors.yellowAccent),
-                                SizedBox(width: 4),
+                                const Icon(Icons.flash_on_rounded, size: 14, color: AppColors.warning),
+                                const SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
-                                    'Học tập chủ động & Hiệu quả',
-                                    style: TextStyle(
-                                      color: Colors.white,
+                                    'Học tập chủ động & hiệu quả',
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
                                       fontSize: 11,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
                                     ),
+                                    maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
                           Text(
                             'Xin chào, ${user?.fullName ?? "bạn"}! 👋',
                             style: TextStyle(
-                              fontSize: isMobile ? 22 : 28,
+                              fontSize: isMobile ? 24 : 30,
                               fontWeight: FontWeight.w900,
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           Text(
-                            'Hôm nay bạn muốn thử thách bản thân với đề thi nào? Ôn luyện ngay để củng cố kiến thức.',
+                            'Hôm nay bạn muốn thử thách bản thân với đề thi nào? Hãy bắt đầu bằng một bài ngắn để duy trì nhịp học tập đều đặn.',
                             style: TextStyle(
                               fontSize: isMobile ? 13 : 15,
-                              color: Colors.white.withValues(alpha: 0.9),
-                              height: 1.4,
+                              color: AppColors.textSecondary,
+                              height: 1.5,
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -121,11 +112,11 @@ class HomeScreen extends StatelessWidget {
                             children: [
                               ElevatedButton.icon(
                                 onPressed: () => onNavigate('exams'),
-                                icon: const Icon(Icons.play_circle_fill, size: 18),
+                                icon: const Icon(Icons.play_arrow_rounded, size: 18),
                                 label: const Text('Bắt đầu làm bài'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: AppColors.primary,
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
                                   elevation: 0,
                                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -133,20 +124,22 @@ class HomeScreen extends StatelessWidget {
                               ),
                               OutlinedButton.icon(
                                 onPressed: () => onNavigate('mistakes'),
-                                icon: const Icon(Icons.book, size: 18, color: Colors.white),
-                                label: const Text('Sổ tay câu sai', style: TextStyle(color: Colors.white)),
+                                icon: const Icon(Icons.book_rounded, size: 18, color: AppColors.primary),
+                                label: const Text('Sổ tay câu sai'),
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.white70, width: 1.5),
+                                  side: const BorderSide(color: AppColors.primary, width: 1.2),
+                                  foregroundColor: AppColors.primary,
                                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
                               ),
                               OutlinedButton.icon(
                                 onPressed: () => onNavigate('create_exam'),
-                                icon: const Icon(Icons.add_circle_outline, size: 18, color: Colors.white),
-                                label: const Text('Tạo đề thi mới', style: TextStyle(color: Colors.white)),
+                                icon: const Icon(Icons.add_rounded, size: 18, color: AppColors.primary),
+                                label: const Text('Tạo đề thi mới'),
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.white70, width: 1.5),
+                                  side: const BorderSide(color: AppColors.border, width: 1.2),
+                                  foregroundColor: AppColors.textPrimary,
                                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 ),
@@ -157,18 +150,19 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     if (!isMobile) ...[
-                      const SizedBox(width: 24),
+                      const SizedBox(width: 22),
                       Container(
-                        width: 140,
-                        height: 140,
+                        width: 130,
+                        height: 130,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.12),
+                          color: AppColors.surface,
                           shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.border),
                         ),
                         child: const Icon(
-                          Icons.psychology,
-                          size: 72,
-                          color: Colors.white,
+                          Icons.psychology_alt_rounded,
+                          size: 64,
+                          color: AppColors.primary,
                         ),
                       ),
                     ],
@@ -176,9 +170,9 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 26),
 
-              // Stat Cards Grid
+              // Thẻ thống kê đơn giản, dễ đọc, không chật chội.
               LayoutBuilder(
                 builder: (context, constraints) {
                   final crossAxisCount = isMobile ? 2 : 4;
@@ -193,7 +187,7 @@ class HomeScreen extends StatelessWidget {
                         child: StatCard(
                           title: 'Đề đã hoàn thành',
                           value: '$completedCount',
-                          icon: Icons.task_alt,
+                          icon: Icons.task_alt_rounded,
                           iconColor: AppColors.primary,
                           iconBgColor: AppColors.primarySoft,
                         ),
@@ -203,7 +197,7 @@ class HomeScreen extends StatelessWidget {
                         child: StatCard(
                           title: 'Tỉ lệ đúng TB',
                           value: '$accuracy%',
-                          icon: Icons.pie_chart_outline,
+                          icon: Icons.pie_chart_rounded,
                           iconColor: AppColors.success,
                           iconBgColor: AppColors.successSoft,
                         ),
@@ -213,7 +207,7 @@ class HomeScreen extends StatelessWidget {
                         child: StatCard(
                           title: 'Sổ tay câu sai',
                           value: '${mistakes.length}',
-                          icon: Icons.menu_book,
+                          icon: Icons.menu_book_rounded,
                           iconColor: AppColors.danger,
                           iconBgColor: AppColors.dangerSoft,
                           subtitle: 'Cần ôn lại',
@@ -224,7 +218,7 @@ class HomeScreen extends StatelessWidget {
                         child: StatCard(
                           title: 'Đề thi đã lưu',
                           value: '${bookmarks.length}',
-                          icon: Icons.bookmark,
+                          icon: Icons.bookmark_rounded,
                           iconColor: AppColors.warning,
                           iconBgColor: AppColors.warningSoft,
                         ),
@@ -234,9 +228,8 @@ class HomeScreen extends StatelessWidget {
                 },
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 30),
 
-              // Categories Quick Bar
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -259,7 +252,7 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               SizedBox(
-                height: 48,
+                height: 46,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: categories.length,
@@ -281,7 +274,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.label_outline, size: 16, color: AppColors.primary),
+                            const Icon(Icons.label_important_outline_rounded, size: 14, color: AppColors.primary),
                             const SizedBox(width: 8),
                             Text(
                               cat.tenChuDe,
@@ -299,9 +292,8 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 30),
 
-              // Featured Exams Section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -318,14 +310,13 @@ class HomeScreen extends StatelessWidget {
                   ),
                   TextButton.icon(
                     onPressed: () => onNavigate('exams'),
-                    icon: const Icon(Icons.arrow_forward, size: 16),
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 16),
                     label: const Text('Kho đề thi'),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
 
-              // Exams Grid
               LayoutBuilder(
                 builder: (context, constraints) {
                   final crossAxisCount = constraints.maxWidth < 650

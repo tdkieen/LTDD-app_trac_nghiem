@@ -35,13 +35,12 @@ class ExamListScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Action Row
               if (isMobile)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Danh Sách Đề Thi',
+                      'Danh sách đề thi',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -56,8 +55,14 @@ class ExamListScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
                       onPressed: () => onNavigate('create_exam'),
-                      icon: const Icon(Icons.add, size: 18),
+                      icon: const Icon(Icons.add_rounded, size: 18),
                       label: const Text('Tạo đề mới'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ],
                 )
@@ -69,7 +74,7 @@ class ExamListScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Danh Sách Đề Thi Trắc Nghiệm',
+                            'Danh sách đề thi trắc nghiệm',
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w800,
@@ -86,44 +91,59 @@ class ExamListScreen extends StatelessWidget {
                     ),
                     ElevatedButton.icon(
                       onPressed: () => onNavigate('create_exam'),
-                      icon: const Icon(Icons.add, size: 18),
+                      icon: const Icon(Icons.add_rounded, size: 18),
                       label: const Text('Tạo đề mới'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                     ),
                   ],
                 ),
 
               const SizedBox(height: 20),
 
-              // Filter Controls Card (Search + Difficulty + Category)
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: AppColors.border),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x04000000), blurRadius: 8, offset: Offset(0, 2)),
-                  ],
                 ),
                 child: Column(
                   children: [
-                    // Search bar
                     TextField(
                       decoration: InputDecoration(
                         hintText: 'Tìm kiếm tên đề thi...',
-                        prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+                        filled: true,
+                        fillColor: AppColors.surfaceSubtle,
+                        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textMuted),
                         suffixIcon: quiz.searchQuery.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear, size: 18),
+                                icon: const Icon(Icons.clear_rounded, size: 18),
                                 onPressed: () => quiz.setSearchQuery(''),
                               )
                             : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       ),
                       onChanged: (val) => quiz.setSearchQuery(val),
                     ),
                     const SizedBox(height: 14),
 
-                    // Filter row: Difficulty chips + Category dropdown
                     if (isMobile) ...[
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
@@ -142,16 +162,17 @@ class ExamListScreen extends StatelessWidget {
                               final isSelected = quiz.selectedDifficulty == diff;
                               return Padding(
                                 padding: const EdgeInsets.only(right: 6),
-                                child: FilterChip(
+                                child: ChoiceChip(
                                   label: Text(diff),
                                   selected: isSelected,
                                   selectedColor: AppColors.primarySoft,
-                                  checkmarkColor: AppColors.primary,
+                                  backgroundColor: AppColors.surfaceSubtle,
                                   labelStyle: TextStyle(
                                     fontSize: 12,
                                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
                                     color: isSelected ? AppColors.primary : AppColors.textSecondary,
                                   ),
+                                  side: BorderSide(color: isSelected ? AppColors.primary : AppColors.border),
                                   onSelected: (_) => quiz.setDifficulty(diff),
                                 ),
                               );
@@ -164,11 +185,24 @@ class ExamListScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<int?>(
-                              initialValue: quiz.selectedCategoryId,
+                              value: quiz.selectedCategoryId,
                               isExpanded: true,
-                              decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                isDense: true,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: AppColors.surfaceSubtle,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
+                                ),
                               ),
                               hint: const Text('Tất cả chủ đề', style: TextStyle(fontSize: 12)),
                               items: [
@@ -186,7 +220,7 @@ class ExamListScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           IconButton(
-                            icon: const Icon(Icons.refresh, size: 20, color: AppColors.textSecondary),
+                            icon: const Icon(Icons.refresh_rounded, size: 20, color: AppColors.textSecondary),
                             tooltip: 'Đặt lại bộ lọc',
                             onPressed: () => quiz.resetFilters(),
                           ),
@@ -195,7 +229,6 @@ class ExamListScreen extends StatelessWidget {
                     ] else ...[
                       Row(
                         children: [
-                          // Difficulty chips
                           Expanded(
                             child: SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
@@ -214,16 +247,17 @@ class ExamListScreen extends StatelessWidget {
                                     final isSelected = quiz.selectedDifficulty == diff;
                                     return Padding(
                                       padding: const EdgeInsets.only(right: 6),
-                                      child: FilterChip(
+                                      child: ChoiceChip(
                                         label: Text(diff),
                                         selected: isSelected,
                                         selectedColor: AppColors.primarySoft,
-                                        checkmarkColor: AppColors.primary,
+                                        backgroundColor: AppColors.surfaceSubtle,
                                         labelStyle: TextStyle(
                                           fontSize: 12,
                                           fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
                                           color: isSelected ? AppColors.primary : AppColors.textSecondary,
                                         ),
+                                        side: BorderSide(color: isSelected ? AppColors.primary : AppColors.border),
                                         onSelected: (_) => quiz.setDifficulty(diff),
                                       ),
                                     );
@@ -232,16 +266,27 @@ class ExamListScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-
-                          // Category Dropdown
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 200),
                             child: DropdownButtonFormField<int?>(
-                              initialValue: quiz.selectedCategoryId,
+                              value: quiz.selectedCategoryId,
                               isExpanded: true,
-                              decoration: const InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                isDense: true,
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: AppColors.surfaceSubtle,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
+                                ),
                               ),
                               hint: const Text('Tất cả chủ đề', style: TextStyle(fontSize: 12)),
                               items: [
@@ -257,13 +302,6 @@ class ExamListScreen extends StatelessWidget {
                               onChanged: (val) => quiz.setCategory(val),
                             ),
                           ),
-
-                          const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(Icons.refresh, size: 20, color: AppColors.textSecondary),
-                            tooltip: 'Đặt lại bộ lọc',
-                            onPressed: () => quiz.resetFilters(),
-                          ),
                         ],
                       ),
                     ],
@@ -273,7 +311,6 @@ class ExamListScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // Exams List / Grid
               if (filteredExams.isEmpty)
                 Container(
                   width: double.infinity,
@@ -281,7 +318,7 @@ class ExamListScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.search_off, size: 64, color: AppColors.textMuted),
+                      const Icon(Icons.search_off_rounded, size: 64, color: AppColors.textMuted),
                       const SizedBox(height: 16),
                       const Text(
                         'Không tìm thấy đề thi phù hợp',

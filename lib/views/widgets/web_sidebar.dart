@@ -247,17 +247,18 @@ class WebSidebar extends StatelessWidget {
     final isActive = activeRoute == id;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: InkWell(
         onTap: () => onNavigate(id),
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           decoration: BoxDecoration(
             color: isActive ? AppColors.primarySoft : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: isActive
-                ? Border.all(color: AppColors.primaryLight.withValues(alpha: 0.3), width: 1)
+                ? Border.all(color: AppColors.primaryLight.withValues(alpha: 0.35), width: 1)
                 : null,
           ),
           child: Row(
@@ -272,7 +273,7 @@ class WebSidebar extends StatelessWidget {
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 13.5,
                     fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                     color: isActive ? AppColors.primary : AppColors.textSecondary,
                   ),
@@ -280,8 +281,8 @@ class WebSidebar extends StatelessWidget {
               ),
               if (isActive)
                 Container(
-                  width: 6,
-                  height: 6,
+                  width: 7,
+                  height: 7,
                   decoration: const BoxDecoration(
                     color: AppColors.primary,
                     shape: BoxShape.circle,

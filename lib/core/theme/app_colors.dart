@@ -14,7 +14,7 @@ class AppColors {
   static const Color background = Color(0xFFF4F7FB);    // Light grayish-blue canvas
   static const Color surface = Color(0xFFFFFFFF);       // Clean pure white
   static const Color surfaceMuted = Color(0xFFF8FAFC);  // Muted card background
-  static const Color surfaceSubtle = Color(0xFFF1F5F9); // Very light neutral background
+  static const Color surfaceSubtle = Color(0xFFF1F5F9); // Very light slate surface
 
   // Borders & Dividers
   static const Color border = Color(0xFFE2E8F0);

@@ -340,7 +340,33 @@ class QuizRepository {
           }
         }
 
-        final cred = await _firebase.signInWithEmailAndPassword(email, trimmedPass);
+        UserCredential? cred;
+        try {
+          cred = await _firebase.signInWithEmailAndPassword(email, trimmedPass);
+        } on FirebaseAuthException catch (e) {
+          if (kDebugMode &&
+              (e.code == 'user-not-found' ||
+                  e.code == 'invalid-credential' ||
+                  e.code == 'invalid-login-credentials' ||
+                  e.code == 'wrong-password' ||
+                  e.code == 'user-disabled')) {
+            AppUser? mockUser;
+            for (final m in MockData.initialUsers) {
+              if (m.email.toLowerCase() == email.toLowerCase() ||
+                  m.userName.toLowerCase() == lowerQuery) {
+                mockUser = m;
+                break;
+              }
+            }
+            if (mockUser != null && trimmedPass == mockUser.password) {
+              try {
+                cred = await _firebase.createUserWithEmailAndPassword(mockUser.email, trimmedPass);
+                matchedLocal = mockUser;
+              } catch (_) {}
+            }
+          }
+          if (cred == null) rethrow;
+        }
         final uid = cred.user!.uid;
 
         AppUser? profile = await _firebase.getUserById(uid);
@@ -351,7 +377,7 @@ class QuizRepository {
                 userName: email.split('@').first,
                 fullName: email.split('@').first,
                 email: email,
-                role: UserRole.student,
+                role: email.toLowerCase() == 'admin@edutech.vn' ? UserRole.admin : UserRole.student,
               );
           profile = baseUser.copyWith(id: uid);
           await _firebase.setUser(profile);

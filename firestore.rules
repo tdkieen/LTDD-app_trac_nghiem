@@ -22,9 +22,10 @@ service cloud.firestore {
     }
 
     // Users collection: only admin can change users.role
+    // Cho phép email quản trị viên mặc định (admin@edutech.vn) khởi tạo vai trò admin
     match /users/{uid} {
       allow read: if isSignedIn();
-      allow create: if (isOwner(uid) && request.resource.data.role != 'admin') || isAdmin();
+      allow create: if (isOwner(uid) && (request.resource.data.role != 'admin' || request.auth.token.email == 'admin@edutech.vn')) || isAdmin();
       allow update: if (isOwner(uid) && request.resource.data.role == resource.data.role) || isAdmin();
       allow delete: if isAdmin();
     }

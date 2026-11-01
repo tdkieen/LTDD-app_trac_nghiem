@@ -1,0 +1,26 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "ltdd-app-trac-nghiem",
+          "appId": "1:330082536986:android:1e6b49fc6d42ade6a50ba3",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "ltdd-app-trac-nghiem",
+          "configurations": {
+            "android": "1:330082536986:android:1e6b49fc6d42ade6a50ba3",
+            "web": "1:330082536986:web:a4c6aa1b413a5db6a50ba3",
+            "windows": "1:330082536986:web:cebb9076c80411e9a50ba3"
+          }
+        }
+      }
+    }
+  }
+}

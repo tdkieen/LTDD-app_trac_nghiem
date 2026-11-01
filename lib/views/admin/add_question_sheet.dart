@@ -150,13 +150,13 @@ class _AddQuestionSheetState extends State<AddQuestionSheet> {
       final files = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
-        withData: true,
+        compressionQuality: 75,
       );
 
       if (files.isNotEmpty) {
         final picked = files.first;
-        final rawBytes = picked.bytes;
-        if (rawBytes == null || rawBytes.isEmpty) {
+        final rawBytes = await picked.readAsBytes();
+        if (rawBytes.isEmpty) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Không đọc được dữ liệu bytes của file ảnh.')),

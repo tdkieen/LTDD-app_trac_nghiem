@@ -187,7 +187,7 @@ class ExamListScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<int?>(
-                              value: quiz.selectedCategoryId,
+                              initialValue: quiz.selectedCategoryId,
                               isExpanded: true,
                               decoration: InputDecoration(
                                 filled: true,
@@ -271,7 +271,7 @@ class ExamListScreen extends StatelessWidget {
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 200),
                             child: DropdownButtonFormField<int?>(
-                              value: quiz.selectedCategoryId,
+                              initialValue: quiz.selectedCategoryId,
                               isExpanded: true,
                               decoration: InputDecoration(
                                 filled: true,

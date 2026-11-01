@@ -295,16 +295,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         color: Colors.white,
                                       ),
                                       const SizedBox(width: 4),
-                                      Text(
-                                        _checkingFirebase
-                                            ? 'Firebase: Đang kiểm tra...'
-                                            : (_isFirebaseConnected == true
-                                                ? 'Firebase: Online'
-                                                : 'Firebase: Offline'),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 11,
+                                      Flexible(
+                                        child: Text(
+                                          _checkingFirebase
+                                              ? 'Checking...'
+                                              : (_isFirebaseConnected == true
+                                                  ? 'Online'
+                                                  : 'Offline'),
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 11,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -490,8 +493,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           final n = double.tryParse(
                             (v ?? '').trim().replaceAll(',', '.'),
                           );
-                          if (n == null || n < 0 || n > 10)
+                          if (n == null || n < 0 || n > 10) {
                             return 'Nhập điểm từ 0 đến 10';
+                          }
                           return null;
                         },
                       ),

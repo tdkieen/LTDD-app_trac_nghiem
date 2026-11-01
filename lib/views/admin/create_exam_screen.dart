@@ -321,8 +321,10 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
                       const SizedBox(height: 20),
 
                       // 5. Nút Thao tác Lưu / Hủy
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: 12,
+                        runSpacing: 8,
                         children: [
                           OutlinedButton(
                             onPressed: widget.onCancel,
@@ -334,7 +336,6 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
                             ),
                             child: const Text('Hủy bỏ'),
                           ),
-                          const SizedBox(width: 12),
                           ElevatedButton.icon(
                             onPressed: _saveExam,
                             icon: const Icon(Icons.check_rounded, size: 18),
@@ -385,12 +386,15 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
             children: [
               Row(
                 children: [
-                  Text(
-                    isEdit ? 'Chỉnh Sửa Đề Thi' : 'Tạo Đề Thi Mới',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                  Flexible(
+                    child: Text(
+                      isEdit ? 'Chỉnh Sửa Đề Thi' : 'Tạo Đề Thi Mới',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

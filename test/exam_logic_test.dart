@@ -123,21 +123,19 @@ void main() {
       session.selectAnswer(501, 'A');
       session.selectAnswer(502, 'B');
 
-      final result = await session.submit('u_student_1');
-      expect(result, isNotNull);
-      expect(result!.soCauDung, 2);
+      final result = await session.submit(userId: 'u_student_1');
+      expect(result.soCauDung, 2);
       expect(result.tongSoCau, 2);
       expect(result.tongDiem, 10.0);
     });
 
     test('3. Hết giờ (_secondsRemaining == 0) tự động nộp bài và báo qua callback/ValueNotifier', () async {
       final session = ExamSessionProvider();
-      // Tạo đề thi có thoiGian = 0 để khi tick sẽ về 0 ngay
       final shortExam = DeThi(
         maDeThi: 101,
         tenDeThi: 'Đề thi ngắn',
         maChuDe: 1,
-        thoiGian: 0,
+        thoiGian: 1,
         soCauHoi: 5,
       );
 
@@ -146,9 +144,10 @@ void main() {
         exam: shortExam,
         isPractice: false,
         userId: 'u_student_1',
+        customDurationSeconds: 1,
         shuffleQuestions: false,
         shuffleOptions: false,
-        onTimeUp: (res) {
+        onTimeUp: () {
           timeUpCallbackFired = true;
         },
       );
@@ -157,8 +156,9 @@ void main() {
       session.selectAnswer(firstQ.maCauHoi, firstQ.dapAnDung ?? 'A');
 
       // Chờ hơn 1 giây để Timer.periodic kích hoạt hết giờ và tự nộp
-      await Future<void>.delayed(const Duration(milliseconds: 1300));
+      await Future<void>.delayed(const Duration(milliseconds: 1400));
 
+      expect(session.secondsRemaining, 0);
       expect(session.isSubmitted, isTrue);
       expect(session.lastResult, isNotNull);
       expect(session.autoSubmitNotifier.value, isNotNull);
@@ -195,45 +195,49 @@ void main() {
     });
 
     test('5. Sổ câu sai: trả lời đúng ở chế độ luyện câu sai thì giảm lanSai; về 0 thì xoá khỏi sổ', () async {
-      const userId = 'u_student_1';
-      // Trong MockData, u_student_1 có câu sai maCauHoi=2 với lanSai=2 và maCauHoi=3 với lanSai=1
-      final initialMistakes = repo.getMistakesByUser(userId);
-      final m2Before = initialMistakes.firstWhere((m) => m.maCauHoi == 2);
-      final m3Before = initialMistakes.firstWhere((m) => m.maCauHoi == 3);
-      expect(m2Before.lanSai, 2);
-      expect(m3Before.lanSai, 1);
+      const userId = 'u_test_mistake_user';
+      // Ghi nhận câu 1 sai 2 lần (lanSai=2) và câu 2 sai 1 lần (lanSai=1)
+      await repo.recordMistake(userId: userId, maCauHoi: 1, dapAnDaChon: 'A');
+      await repo.recordMistake(userId: userId, maCauHoi: 1, dapAnDaChon: 'A');
+      await repo.recordMistake(userId: userId, maCauHoi: 2, dapAnDaChon: 'B');
 
+      final initialMistakes = repo.getMistakesByUser(userId);
+      final m1Before = initialMistakes.firstWhere((m) => m.maCauHoi == 1);
+      final m2Before = initialMistakes.firstWhere((m) => m.maCauHoi == 2);
+      expect(m1Before.lanSai, 2);
+      expect(m2Before.lanSai, 1);
+
+      final q1 = repo.getQuestionById(1)!;
       final q2 = repo.getQuestionById(2)!;
-      final q3 = repo.getQuestionById(3)!;
 
       final session = ExamSessionProvider();
       session.startPracticeFromQuestions(
-        customQuestions: [q2, q3],
+        customQuestions: [q1, q2],
         title: 'Ôn câu sai',
       );
 
       // Trả lời đúng cả 2 câu trong chế độ luyện câu sai
+      session.selectAnswer(q1.maCauHoi, q1.dapAnDung!);
       session.selectAnswer(q2.maCauHoi, q2.dapAnDung!);
-      session.selectAnswer(q3.maCauHoi, q3.dapAnDung!);
-      await session.submit(userId);
+      await session.submit(userId: userId);
 
       final afterFirstPractice = repo.getMistakesByUser(userId);
-      final m2After1 = afterFirstPractice.firstWhere((m) => m.maCauHoi == 2);
-      // Câu 2 giảm lanSai từ 2 xuống 1
-      expect(m2After1.lanSai, 1);
-      // Câu 3 giảm lanSai từ 1 về 0 nên đã bị xóa khỏi sổ câu sai
-      expect(afterFirstPractice.any((m) => m.maCauHoi == 3), isFalse);
+      final m1After1 = afterFirstPractice.firstWhere((m) => m.maCauHoi == 1);
+      // Câu 1 giảm lanSai từ 2 xuống 1
+      expect(m1After1.lanSai, 1);
+      // Câu 2 giảm lanSai từ 1 về 0 nên đã bị xóa khỏi sổ câu sai
+      expect(afterFirstPractice.any((m) => m.maCauHoi == 2), isFalse);
 
-      // Luyện thêm 1 lần nữa và trả lời đúng câu 2 -> lanSai về 0 và xóa khỏi sổ
+      // Luyện thêm 1 lần nữa và trả lời đúng câu 1 -> lanSai về 0 và xóa khỏi sổ
       session.startPracticeFromQuestions(
-        customQuestions: [q2],
+        customQuestions: [q1],
         title: 'Ôn câu sai lần 2',
       );
-      session.selectAnswer(q2.maCauHoi, q2.dapAnDung!);
-      await session.submit(userId);
+      session.selectAnswer(q1.maCauHoi, q1.dapAnDung!);
+      await session.submit(userId: userId);
 
       final afterSecondPractice = repo.getMistakesByUser(userId);
-      expect(afterSecondPractice.any((m) => m.maCauHoi == 2), isFalse);
+      expect(afterSecondPractice.any((m) => m.maCauHoi == 1), isFalse);
     });
   });
 }

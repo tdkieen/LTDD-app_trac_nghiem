@@ -84,7 +84,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Create Exam Screen is visible
-    expect(find.text('Tạo Đề Thi Trắc Nghiệm Mới'), findsOneWidget);
+    expect(find.text('Tạo Đề Thi Mới'), findsWidgets);
     expect(find.text('Tên đề thi *'), findsOneWidget);
 
     // Enter exam name

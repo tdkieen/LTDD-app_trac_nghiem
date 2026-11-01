@@ -61,6 +61,7 @@ class KetQuaThi {
   final List<ChiTietKetQua> chiTiet;
   final DeThi? deThi;
   final String? userName;
+  final int soLanViPham;
 
   KetQuaThi({
     required this.maKetQua,
@@ -74,6 +75,7 @@ class KetQuaThi {
     this.chiTiet = const [],
     this.deThi,
     this.userName,
+    this.soLanViPham = 0,
   }) : ngayThi = ngayThi ?? DateTime.now();
 
   int get soCauSai => tongSoCau - soCauDung;
@@ -95,6 +97,7 @@ class KetQuaThi {
     'tongSoCau': tongSoCau,
     'thoiGianLamGiay': thoiGianLamGiay,
     'ngayThi': ngayThi.toIso8601String(),
+    'soLanViPham': soLanViPham,
     'chiTietJson': jsonEncode(chiTiet.map((e) => e.toJson()).toList()),
   };
 
@@ -118,7 +121,8 @@ class KetQuaThi {
       ngayThi: json['ngayThi'] != null ? DateTime.parse(json['ngayThi']) : DateTime.now(),
       chiTiet: details,
       deThi: deThi,
-      userName: userName,
+      userName: userName ?? json['userName'],
+      soLanViPham: json['soLanViPham'] ?? 0,
     );
   }
 }

@@ -19,6 +19,9 @@ class ExamSessionProvider extends ChangeNotifier {
   int _cheatWarnings = 0;
   bool _isSubmitted = false;
   KetQuaThi? _lastResult;
+  String _currentUserId = 'guest';
+  VoidCallback? onTimeUp;
+  final ValueNotifier<KetQuaThi?> autoSubmitNotifier = ValueNotifier<KetQuaThi?>(null);
 
   DeThi? get currentExam => _currentExam;
   List<CauHoi> get questions => _questions;
@@ -30,6 +33,10 @@ class ExamSessionProvider extends ChangeNotifier {
   int get cheatWarnings => _cheatWarnings;
   bool get isSubmitted => _isSubmitted;
   KetQuaThi? get lastResult => _lastResult;
+
+  void setCurrentUser(String userId) {
+    _currentUserId = userId;
+  }
 
   CauHoi? get currentQuestion =>
       _questions.isNotEmpty && _currentIndex < _questions.length
@@ -49,6 +56,9 @@ class ExamSessionProvider extends ChangeNotifier {
   void startExam({
     required DeThi exam,
     bool isPractice = false,
+    String? userId,
+    VoidCallback? onTimeUp,
+    int? customDurationSeconds,
   }) {
     _timer?.cancel();
     _currentExam = exam;
@@ -58,11 +68,14 @@ class ExamSessionProvider extends ChangeNotifier {
     _cheatWarnings = 0;
     _isSubmitted = false;
     _lastResult = null;
+    autoSubmitNotifier.value = null;
+    if (userId != null) _currentUserId = userId;
+    if (onTimeUp != null) this.onTimeUp = onTimeUp;
 
     final qList = _repo.getQuestionsByExam(exam.maDeThi);
     _questions = List.from(qList);
 
-    _totalSeconds = (exam.thoiGian ?? 15) * 60;
+    _totalSeconds = customDurationSeconds ?? (exam.thoiGian ?? 15) * 60;
     _secondsRemaining = _totalSeconds;
 
     if (!_isPractice && _secondsRemaining > 0) {
@@ -82,6 +95,7 @@ class ExamSessionProvider extends ChangeNotifier {
     _cheatWarnings = 0;
     _isSubmitted = false;
     _lastResult = null;
+    autoSubmitNotifier.value = null;
 
     _questions = List.from(customQuestions);
     _currentExam = DeThi(
@@ -100,10 +114,15 @@ class ExamSessionProvider extends ChangeNotifier {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsRemaining > 0) {
         _secondsRemaining--;
-        notifyListeners();
-      } else {
+      }
+      if (_secondsRemaining <= 0) {
         _timer?.cancel();
-        // Auto submit when time is up
+        if (!_isSubmitted) {
+          final result = submit(userId: _currentUserId);
+          autoSubmitNotifier.value = result;
+          onTimeUp?.call();
+        }
+      } else {
         notifyListeners();
       }
     });
@@ -136,10 +155,16 @@ class ExamSessionProvider extends ChangeNotifier {
     }
   }
 
-  void registerCheatWarning() {
+  void registerCheatWarning({String? userId}) {
     if (!_isPractice && !_isSubmitted) {
       _cheatWarnings++;
-      notifyListeners();
+      if (_cheatWarnings >= 3) {
+        final result = submit(userId: userId ?? _currentUserId);
+        autoSubmitNotifier.value = result;
+        onTimeUp?.call();
+      } else {
+        notifyListeners();
+      }
     }
   }
 
@@ -154,6 +179,9 @@ class ExamSessionProvider extends ChangeNotifier {
       maDeThi: _currentExam?.maDeThi ?? 0,
       answers: _answers,
       thoiGianLamGiay: timeSpent > 0 ? timeSpent : 30,
+      questions: _questions,
+      isPractice: _isPractice,
+      soLanViPham: _cheatWarnings,
     );
 
     _lastResult = result;
@@ -164,6 +192,7 @@ class ExamSessionProvider extends ChangeNotifier {
   @override
   void dispose() {
     _timer?.cancel();
+    autoSubmitNotifier.dispose();
     super.dispose();
   }
 }

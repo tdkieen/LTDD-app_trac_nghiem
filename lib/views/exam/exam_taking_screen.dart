@@ -24,15 +24,46 @@ class ExamTakingScreen extends StatefulWidget {
 }
 
 class _ExamTakingScreenState extends State<ExamTakingScreen> with WidgetsBindingObserver {
+  ExamSessionProvider? _session;
+  bool _hasFinished = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final session = context.read<ExamSessionProvider>();
+      final auth = context.read<AuthProvider>();
+      _session = session;
+      session.setCurrentUser(auth.currentUser?.id ?? 'guest');
+      session.onTimeUp = _handleAutoSubmit;
+      session.autoSubmitNotifier.addListener(_onAutoSubmitChanged);
+    });
+  }
+
+  void _onAutoSubmitChanged() {
+    final result = _session?.autoSubmitNotifier.value;
+    if (result != null && mounted && !_hasFinished) {
+      _hasFinished = true;
+      widget.onFinish(result);
+    }
+  }
+
+  void _handleAutoSubmit() {
+    final result = _session?.lastResult;
+    if (result != null && mounted && !_hasFinished) {
+      _hasFinished = true;
+      widget.onFinish(result);
+    }
   }
 
   @override
   void dispose() {
+    _session?.autoSubmitNotifier.removeListener(_onAutoSubmitChanged);
+    if (_session?.onTimeUp == _handleAutoSubmit) {
+      _session?.onTimeUp = null;
+    }
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -41,7 +72,8 @@ class _ExamTakingScreenState extends State<ExamTakingScreen> with WidgetsBinding
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
       final session = context.read<ExamSessionProvider>();
-      session.registerCheatWarning();
+      final auth = context.read<AuthProvider>();
+      session.registerCheatWarning(userId: auth.currentUser?.id);
     }
   }
 

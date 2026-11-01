@@ -330,19 +330,22 @@ class QuizRepository {
     required int maDeThi,
     required Map<int, String> answers, // maCauHoi -> 'A' | 'B' | 'C' | 'D'
     required int thoiGianLamGiay,
+    List<CauHoi>? questions,
+    bool isPractice = false,
+    int soLanViPham = 0,
   }) {
     final exam = getExamById(maDeThi);
-    final questions = getQuestionsByExam(maDeThi);
+    final examQuestions = questions ?? getQuestionsByExam(maDeThi);
     int correctCount = 0;
     final List<ChiTietKetQua> details = [];
 
-    for (final q in questions) {
+    for (final q in examQuestions) {
       final chosen = answers[q.maCauHoi];
       final isCorrect = chosen != null && chosen.toUpperCase() == (q.dapAnDung ?? '').toUpperCase();
       if (isCorrect) {
         correctCount++;
-      } else {
-        // Record into Mistake Notebook
+      } else if (!isPractice) {
+        // Record into Mistake Notebook only when not in practice mode
         recordMistake(userId: userId, maCauHoi: q.maCauHoi, dapAnDaChon: chosen);
       }
 
@@ -359,7 +362,7 @@ class QuizRepository {
       ));
     }
 
-    final totalQuestions = questions.isNotEmpty ? questions.length : (exam?.soCauHoi ?? 10);
+    final totalQuestions = examQuestions.isNotEmpty ? examQuestions.length : (exam?.soCauHoi ?? 10);
     final score = totalQuestions > 0 ? (correctCount / totalQuestions) * 10.0 : 0.0;
     final roundedScore = double.parse(score.toStringAsFixed(1));
 
@@ -381,14 +384,17 @@ class QuizRepository {
       chiTiet: details,
       deThi: exam,
       userName: user?.fullName ?? user?.userName ?? 'Ẩn danh',
+      soLanViPham: soLanViPham,
     );
 
-    _results.insert(0, result);
+    if (!isPractice) {
+      _results.insert(0, result);
 
-    // Increase exam take count
-    final examIdx = _exams.indexWhere((e) => e.maDeThi == maDeThi);
-    if (examIdx != -1) {
-      _exams[examIdx] = _exams[examIdx].copyWith(luotThi: _exams[examIdx].luotThi + 1);
+      // Increase exam take count
+      final examIdx = _exams.indexWhere((e) => e.maDeThi == maDeThi);
+      if (examIdx != -1) {
+        _exams[examIdx] = _exams[examIdx].copyWith(luotThi: _exams[examIdx].luotThi + 1);
+      }
     }
 
     return result;
@@ -408,6 +414,7 @@ class QuizRepository {
         chiTiet: r.chiTiet,
         deThi: getExamById(r.maDeThi),
         userName: r.userName,
+        soLanViPham: r.soLanViPham,
       );
     }).toList();
   }
@@ -427,6 +434,7 @@ class QuizRepository {
         chiTiet: r.chiTiet,
         deThi: getExamById(r.maDeThi),
         userName: r.userName,
+        soLanViPham: r.soLanViPham,
       );
     } catch (_) {
       return null;

@@ -1,5 +1,6 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -7,6 +8,7 @@ import '../../core/responsive/responsive_layout.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/cau_hoi.dart';
 import '../../models/de_thi.dart';
+import '../widgets/question_media_view.dart';
 
 class AddQuestionSheet extends StatefulWidget {
   final DeThi exam;
@@ -113,27 +115,34 @@ class _AddQuestionSheetState extends State<AddQuestionSheet> {
     super.dispose();
   }
 
-  Future<void> _pickAudioFile() async {
-    try {
-      final files = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['mp3', 'wav', 'aac', 'm4a', 'ogg'],
-      );
+  static const int _maxImageBytes = 300 * 1024; // 300KB
 
-      if (files.isNotEmpty) {
-        final path = files.first.path ?? files.first.name;
-        setState(() {
-          _audioPathCtrl.text = path;
-          _isAudio = true;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không thể chọn file âm thanh: $e')),
+  Future<Uint8List?> _compressImageUnder300KB(Uint8List inputBytes) async {
+    if (inputBytes.lengthInBytes <= _maxImageBytes) {
+      return inputBytes;
+    }
+    final widths = [800, 600, 480, 360, 260, 180];
+    for (final targetWidth in widths) {
+      try {
+        final codec = await ui.instantiateImageCodec(
+          inputBytes,
+          targetWidth: targetWidth,
         );
+        final frame = await codec.getNextFrame();
+        final byteData = await frame.image.toByteData(
+          format: ui.ImageByteFormat.png,
+        );
+        if (byteData != null) {
+          final resizedBytes = byteData.buffer.asUint8List();
+          if (resizedBytes.lengthInBytes <= _maxImageBytes) {
+            return resizedBytes;
+          }
+        }
+      } catch (_) {
+        break;
       }
     }
+    return null;
   }
 
   Future<void> _pickImageFile() async {
@@ -141,12 +150,47 @@ class _AddQuestionSheetState extends State<AddQuestionSheet> {
       final files = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+        withData: true,
       );
 
       if (files.isNotEmpty) {
-        final path = files.first.path ?? files.first.name;
+        final picked = files.first;
+        final rawBytes = picked.bytes;
+        if (rawBytes == null || rawBytes.isEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Không đọc được dữ liệu bytes của file ảnh.')),
+            );
+          }
+          return;
+        }
+
+        final compressed = await _compressImageUnder300KB(rawBytes);
+        if (compressed == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Ảnh quá lớn (> 300KB sau khi nén). Vui lòng chọn ảnh nhỏ hơn 300KB.'),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+          }
+          return;
+        }
+
+        final ext = (picked.extension ?? 'png').toLowerCase();
+        final mime = ext == 'jpg' || ext == 'jpeg'
+            ? 'image/jpeg'
+            : ext == 'webp'
+                ? 'image/webp'
+                : ext == 'gif'
+                    ? 'image/gif'
+                    : 'image/png';
+        final usedMime = compressed.lengthInBytes == rawBytes.lengthInBytes ? mime : 'image/png';
+        final dataUri = 'data:$usedMime;base64,${base64Encode(compressed)}';
+
         setState(() {
-          _imagePathCtrl.text = path;
+          _imagePathCtrl.text = dataUri;
         });
       }
     } catch (e) {
@@ -160,9 +204,9 @@ class _AddQuestionSheetState extends State<AddQuestionSheet> {
 
   Future<void> _toggleTestAudio() async {
     final path = _audioPathCtrl.text.trim();
-    if (path.isEmpty) {
+    if (path.isEmpty || (!path.startsWith('http://') && !path.startsWith('https://'))) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng chọn hoặc nhập đường dẫn file âm thanh trước.')),
+        const SnackBar(content: Text('Vui lòng nhập URL âm thanh hợp lệ (http:// hoặc https://).')),
       );
       return;
     }
@@ -174,14 +218,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet> {
       setState(() => _isPlayingTestAudio = false);
     } else {
       try {
-        Source source;
-        if (path.startsWith('http://') || path.startsWith('https://')) {
-          source = UrlSource(path);
-        } else if (!kIsWeb && File(path).existsSync()) {
-          source = DeviceFileSource(path);
-        } else {
-          source = UrlSource('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3');
-        }
+        final Source source = UrlSource(path);
 
         setState(() => _isPlayingTestAudio = true);
         await _testAudioPlayer!.play(source);
@@ -424,37 +461,29 @@ class _AddQuestionSheetState extends State<AddQuestionSheet> {
                           ),
                           if (_isAudio) ...[
                             const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _audioPathCtrl,
-                                    decoration: InputDecoration(
-                                      hintText: 'Đường dẫn file .mp3 hoặc URL...',
-                                      prefixIcon: const Icon(Icons.audio_file, size: 18),
-                                      suffixIcon: _audioPathCtrl.text.isNotEmpty
-                                          ? IconButton(
-                                              icon: const Icon(Icons.clear, size: 16),
-                                              onPressed: () => setState(() => _audioPathCtrl.clear()),
-                                            )
-                                          : null,
-                                    ),
-                                    onChanged: (_) => setState(() {}),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton.icon(
-                                  onPressed: _pickAudioFile,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primarySoft,
-                                    foregroundColor: AppColors.primary,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                                  ),
-                                  icon: const Icon(Icons.folder_open, size: 16),
-                                  label: const Text('Chọn file', style: TextStyle(fontSize: 12)),
-                                ),
-                              ],
+                            TextFormField(
+                              controller: _audioPathCtrl,
+                              keyboardType: TextInputType.url,
+                              decoration: InputDecoration(
+                                hintText: 'Nhập URL file âm thanh (http:// hoặc https://)...',
+                                prefixIcon: const Icon(Icons.link, size: 18),
+                                suffixIcon: _audioPathCtrl.text.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(Icons.clear, size: 16),
+                                        onPressed: () => setState(() => _audioPathCtrl.clear()),
+                                      )
+                                    : null,
+                              ),
+                              validator: (v) {
+                                if (!_isAudio) return null;
+                                final val = (v ?? '').trim();
+                                if (val.isEmpty) return 'Vui lòng nhập URL âm thanh';
+                                if (!val.startsWith('http://') && !val.startsWith('https://')) {
+                                  return 'Audio chỉ nhận URL (http:// hoặc https://)';
+                                }
+                                return null;
+                              },
+                              onChanged: (_) => setState(() {}),
                             ),
                             if (_audioPathCtrl.text.trim().isNotEmpty) ...[
                               const SizedBox(height: 8),
@@ -535,18 +564,31 @@ class _AddQuestionSheetState extends State<AddQuestionSheet> {
 
   Widget _buildImagePreview(String path) {
     Widget img;
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      img = Image.network(path, height: 100, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.broken_image));
-    } else if (!kIsWeb) {
-      final f = File(path);
-      if (f.existsSync()) {
-        img = Image.file(f, height: 100, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.broken_image));
-      } else {
-        img = const Text('File ảnh không tồn tại ở đường dẫn này', style: TextStyle(color: AppColors.danger, fontSize: 12));
-      }
+    final memoryBytes = QuestionImageView.tryDecodeDataUri(path);
+    if (memoryBytes != null) {
+      img = Image.memory(
+        memoryBytes,
+        height: 100,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const Icon(Icons.broken_image),
+      );
+    } else if (path.startsWith('http://') || path.startsWith('https://')) {
+      img = Image.network(
+        path,
+        height: 100,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => const Icon(Icons.broken_image),
+      );
     } else {
-      img = Image.network(path, height: 100, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.broken_image));
+      img = const Text(
+        'Chỉ hỗ trợ URL (http/https) hoặc ảnh nhỏ (< 300KB) từ máy',
+        style: TextStyle(color: AppColors.danger, fontSize: 12),
+      );
     }
+
+    final displayLabel = memoryBytes != null
+        ? 'Ảnh Base64 đã nén (${(memoryBytes.lengthInBytes / 1024).toStringAsFixed(1)} KB)'
+        : path;
 
     return Container(
       padding: const EdgeInsets.all(6),
@@ -564,7 +606,7 @@ class _AddQuestionSheetState extends State<AddQuestionSheet> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              path,
+              displayLabel,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),

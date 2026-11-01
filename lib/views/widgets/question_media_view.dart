@@ -1,5 +1,5 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -13,6 +13,21 @@ class QuestionImageView extends StatelessWidget {
     this.maxHeight = 220,
   });
 
+  static Uint8List? tryDecodeDataUri(String path) {
+    try {
+      final trimmed = path.trim();
+      if (trimmed.startsWith('data:image')) {
+        final commaIdx = trimmed.indexOf(',');
+        if (commaIdx != -1) {
+          return base64Decode(trimmed.substring(commaIdx + 1));
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (imagePath.trim().isEmpty) return const SizedBox.shrink();
@@ -20,7 +35,14 @@ class QuestionImageView extends StatelessWidget {
     final path = imagePath.trim();
     Widget imgWidget;
 
-    if (path.startsWith('http://') || path.startsWith('https://')) {
+    final memoryBytes = tryDecodeDataUri(path);
+    if (memoryBytes != null) {
+      imgWidget = Image.memory(
+        memoryBytes,
+        fit: BoxFit.contain,
+        errorBuilder: (_, _, _) => _buildErrorWidget(),
+      );
+    } else if (path.startsWith('http://') || path.startsWith('https://')) {
       imgWidget = Image.network(
         path,
         fit: BoxFit.contain,
@@ -32,23 +54,8 @@ class QuestionImageView extends StatelessWidget {
         fit: BoxFit.contain,
         errorBuilder: (_, _, _) => _buildErrorWidget(),
       );
-    } else if (!kIsWeb) {
-      final file = File(path);
-      if (file.existsSync()) {
-        imgWidget = Image.file(
-          file,
-          fit: BoxFit.contain,
-          errorBuilder: (_, _, _) => _buildErrorWidget(),
-        );
-      } else {
-        imgWidget = _buildErrorWidget(label: 'Không tìm thấy file ảnh: $path');
-      }
     } else {
-      imgWidget = Image.network(
-        path,
-        fit: BoxFit.contain,
-        errorBuilder: (_, _, _) => _buildErrorWidget(),
-      );
+      imgWidget = _buildErrorWidget(label: 'Định dạng ảnh không hợp lệ (chỉ hỗ trợ URL http/https hoặc ảnh Base64)');
     }
 
     return Container(

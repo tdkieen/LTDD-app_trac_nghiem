@@ -41,22 +41,21 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDemoKeyForEdutechQuizAppWeb2026',
-    appId: '1:123456789012:web:abcdef1234567890',
-    messagingSenderId: '123456789012',
-    projectId: 'edutech-trac-nghiem',
-    authDomain: 'edutech-trac-nghiem.firebaseapp.com',
-    storageBucket: 'edutech-trac-nghiem.firebasestorage.app',
+    apiKey: 'AIzaSyDgGevKAkbVQs86uMUX_rqapM9HraAUGq0',
+    appId: '1:330082536986:web:a4c6aa1b413a5db6a50ba3',
+    messagingSenderId: '330082536986',
+    projectId: 'ltdd-app-trac-nghiem',
+    authDomain: 'ltdd-app-trac-nghiem.firebaseapp.com',
+    storageBucket: 'ltdd-app-trac-nghiem.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDemoKeyForEdutechQuizAppAndroid2026',
-    appId: '1:123456789012:android:abcdef1234567890',
-    messagingSenderId: '123456789012',
-    projectId: 'edutech-trac-nghiem',
-    storageBucket: 'edutech-trac-nghiem.firebasestorage.app',
+    apiKey: 'AIzaSyChS6GzpdnX0BfMXgZXdD8zjSaPXAtvgMI',
+    appId: '1:330082536986:android:1e6b49fc6d42ade6a50ba3',
+    messagingSenderId: '330082536986',
+    projectId: 'ltdd-app-trac-nghiem',
+    storageBucket: 'ltdd-app-trac-nghiem.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDemoKeyForEdutechQuizAppIos2026',
     appId: '1:123456789012:ios:abcdef1234567890',
@@ -76,11 +75,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDemoKeyForEdutechQuizAppWindows2026',
-    appId: '1:123456789012:web:abcdef1234567890',
-    messagingSenderId: '123456789012',
-    projectId: 'edutech-trac-nghiem',
-    authDomain: 'edutech-trac-nghiem.firebaseapp.com',
-    storageBucket: 'edutech-trac-nghiem.firebasestorage.app',
+    apiKey: 'AIzaSyDgGevKAkbVQs86uMUX_rqapM9HraAUGq0',
+    appId: '1:330082536986:web:cebb9076c80411e9a50ba3',
+    messagingSenderId: '330082536986',
+    projectId: 'ltdd-app-trac-nghiem',
+    authDomain: 'ltdd-app-trac-nghiem.firebaseapp.com',
+    storageBucket: 'ltdd-app-trac-nghiem.firebasestorage.app',
   );
 }

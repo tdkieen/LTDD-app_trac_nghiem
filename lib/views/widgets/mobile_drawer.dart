@@ -16,7 +16,6 @@ class MobileDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final canManage = auth.isTeacher || auth.isAdmin;
     final isAdmin = auth.isAdmin;
     final user = auth.currentUser;
 
@@ -90,7 +89,7 @@ class MobileDrawer extends StatelessWidget {
                   _buildItem(context, 'mistakes', 'Sổ tay câu sai', Icons.menu_book_outlined, Icons.menu_book),
                   _buildItem(context, 'leaderboard', 'Bảng xếp hạng', Icons.emoji_events_outlined, Icons.emoji_events),
 
-                  if (canManage) ...[
+                  if (isAdmin) ...[
                     const Divider(height: 24),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),

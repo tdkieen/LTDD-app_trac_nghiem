@@ -16,7 +16,6 @@ class WebSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final canManage = auth.isTeacher || auth.isAdmin;
     final isAdmin = auth.isAdmin;
 
     return Container(
@@ -136,7 +135,7 @@ class WebSidebar extends StatelessWidget {
                   activeIcon: Icons.emoji_events,
                 ),
 
-                if (canManage) ...[
+                if (isAdmin) ...[
                   const SizedBox(height: 16),
                   _buildSectionHeader('QUẢN LÝ'),
                   _buildMenuItem(

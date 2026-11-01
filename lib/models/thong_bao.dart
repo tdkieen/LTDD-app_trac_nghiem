@@ -1,5 +1,5 @@
 class ThongBao {
-  final int id;
+  final String id;
   final String? userId; // null = gửi toàn hệ thống
   final String noiDung;
   final String? duongDan;
@@ -18,7 +18,7 @@ class ThongBao {
   }) : thoiGian = thoiGian ?? DateTime.now();
 
   ThongBao copyWith({
-    int? id,
+    String? id,
     String? userId,
     String? noiDung,
     String? duongDan,
@@ -48,7 +48,7 @@ class ThongBao {
   };
 
   factory ThongBao.fromJson(Map<String, dynamic> json) => ThongBao(
-    id: json['id'] ?? 0,
+    id: (json['id'] ?? '').toString(),
     userId: json['userId'],
     noiDung: json['noiDung'] ?? '',
     duongDan: json['duongDan'],

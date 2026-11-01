@@ -1,7 +1,7 @@
 import 'de_thi.dart';
 
 class DeThiYeuThich {
-  final int id;
+  final String id;
   final String userId;
   final int maDeThi;
   final DeThi? deThi;
@@ -23,7 +23,7 @@ class DeThiYeuThich {
   };
 
   factory DeThiYeuThich.fromJson(Map<String, dynamic> json, {DeThi? deThi}) => DeThiYeuThich(
-    id: json['id'] ?? 0,
+    id: (json['id'] ?? '').toString(),
     userId: json['userId'] ?? '',
     maDeThi: json['maDeThi'] ?? 0,
     deThi: deThi,

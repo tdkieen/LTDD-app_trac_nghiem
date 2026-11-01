@@ -13,7 +13,7 @@ class NotificationProvider extends ChangeNotifier {
     return _repo.getUnreadNotificationCount(userId);
   }
 
-  Future<void> markAsRead(int id) async {
+  Future<void> markAsRead(String id) async {
     await _repo.markAsRead(id);
     notifyListeners();
   }

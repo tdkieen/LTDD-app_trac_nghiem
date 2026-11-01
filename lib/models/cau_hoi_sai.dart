@@ -1,7 +1,7 @@
 import 'cau_hoi.dart';
 
 class CauHoiSai {
-  final int id;
+  final String id;
   final String userId;
   final int maCauHoi;
   final CauHoi? cauHoi;
@@ -20,7 +20,7 @@ class CauHoiSai {
   }) : lanCuoiSai = lanCuoiSai ?? DateTime.now();
 
   CauHoiSai copyWith({
-    int? id,
+    String? id,
     String? userId,
     int? maCauHoi,
     CauHoi? cauHoi,
@@ -49,7 +49,7 @@ class CauHoiSai {
   };
 
   factory CauHoiSai.fromJson(Map<String, dynamic> json, {CauHoi? cauHoi}) => CauHoiSai(
-    id: json['id'] ?? 0,
+    id: (json['id'] ?? '').toString(),
     userId: json['userId'] ?? '',
     maCauHoi: json['maCauHoi'] ?? 0,
     cauHoi: cauHoi,

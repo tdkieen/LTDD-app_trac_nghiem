@@ -8,6 +8,7 @@ import '../models/ket_qua_thi.dart';
 import '../providers/auth_provider.dart';
 import '../providers/exam_session_provider.dart';
 import '../providers/quiz_provider.dart';
+import '../services/quiz_repository.dart';
 import 'auth/auth_screen.dart';
 import 'admin/create_exam_screen.dart';
 import 'admin/manage_categories_screen.dart';
@@ -39,6 +40,21 @@ class _MainLayoutShellState extends State<MainLayoutShell> {
   int? _managingQuestionExamId;
   KetQuaThi? _viewingResult;
   bool _isTakingExam = false;
+  bool _isStartupSyncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!QuizRepository().isSyncedOrOffline) {
+      _isStartupSyncing = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await context.read<QuizProvider>().syncData();
+        if (mounted) {
+          setState(() => _isStartupSyncing = false);
+        }
+      });
+    }
+  }
 
   void _navigateTo(String route) {
     setState(() {
@@ -244,6 +260,29 @@ class _MainLayoutShellState extends State<MainLayoutShell> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isStartupSyncing) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: AppColors.primary),
+              SizedBox(height: 16),
+              Text(
+                'Đang đồng bộ dữ liệu...',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final auth = context.watch<AuthProvider>();
     if (!auth.isAuthenticated) {
       return const AuthScreen();

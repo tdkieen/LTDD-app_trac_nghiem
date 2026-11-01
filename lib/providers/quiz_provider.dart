@@ -90,7 +90,7 @@ class QuizProvider extends ChangeNotifier {
 
   List<CauHoiSai> getMistakes(String userId) => _repo.getMistakesByUser(userId);
 
-  Future<void> deleteMistake(int id) async {
+  Future<void> deleteMistake(String id) async {
     await _repo.deleteMistake(id);
     _errorMessage = _repo.lastError;
     notifyListeners();
@@ -98,7 +98,7 @@ class QuizProvider extends ChangeNotifier {
 
   List<KetQuaThi> getUserHistory(String userId) => _repo.getResultsByUser(userId);
 
-  Future<void> deleteHistory(int id) async {
+  Future<void> deleteHistory(String id) async {
     await _repo.deleteResult(id);
     _errorMessage = _repo.lastError;
     notifyListeners();

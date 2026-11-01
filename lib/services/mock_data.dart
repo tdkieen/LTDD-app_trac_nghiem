@@ -483,7 +483,7 @@ class MockData {
 
   static List<KetQuaThi> initialResults = [
     KetQuaThi(
-      maKetQua: 1,
+      maKetQua: '1',
       userId: 'u1',
       maDeThi: 101,
       tongDiem: 8.0,
@@ -551,7 +551,7 @@ class MockData {
       ],
     ),
     KetQuaThi(
-      maKetQua: 2,
+      maKetQua: '2',
       userId: 'u4',
       maDeThi: 101,
       tongDiem: 10.0,
@@ -562,7 +562,7 @@ class MockData {
       userName: 'Lê Hoàng Minh',
     ),
     KetQuaThi(
-      maKetQua: 3,
+      maKetQua: '3',
       userId: 'u5',
       maDeThi: 101,
       tongDiem: 6.0,
@@ -573,7 +573,7 @@ class MockData {
       userName: 'Phạm Quỳnh Anh',
     ),
     KetQuaThi(
-      maKetQua: 4,
+      maKetQua: '4',
       userId: 'u1',
       maDeThi: 102,
       tongDiem: 10.0,
@@ -584,7 +584,7 @@ class MockData {
       userName: 'Nguyễn Duy Kì',
     ),
     KetQuaThi(
-      maKetQua: 5,
+      maKetQua: '5',
       userId: 'u1',
       maDeThi: 104,
       tongDiem: 6.0,
@@ -598,7 +598,7 @@ class MockData {
 
   static List<CauHoiSai> initialMistakes = [
     CauHoiSai(
-      id: 1,
+      id: '1',
       userId: 'u1',
       maCauHoi: 4,
       dapAnDaChon: 'A',
@@ -606,7 +606,7 @@ class MockData {
       lanCuoiSai: DateTime.now().subtract(const Duration(days: 2)),
     ),
     CauHoiSai(
-      id: 2,
+      id: '2',
       userId: 'u1',
       maCauHoi: 19,
       dapAnDaChon: 'B',
@@ -614,7 +614,7 @@ class MockData {
       lanCuoiSai: DateTime.now().subtract(const Duration(hours: 12)),
     ),
     CauHoiSai(
-      id: 3,
+      id: '3',
       userId: 'u1',
       maCauHoi: 20,
       dapAnDaChon: 'C',
@@ -625,13 +625,13 @@ class MockData {
 
   static List<DeThiYeuThich> initialBookmarks = [
     DeThiYeuThich(
-      id: 1,
+      id: '1',
       userId: 'u1',
       maDeThi: 101,
       ngayLuu: DateTime.now().subtract(const Duration(days: 5)),
     ),
     DeThiYeuThich(
-      id: 2,
+      id: '2',
       userId: 'u1',
       maDeThi: 103,
       ngayLuu: DateTime.now().subtract(const Duration(days: 2)),
@@ -640,7 +640,7 @@ class MockData {
 
   static List<ThongBao> initialNotifications = [
     ThongBao(
-      id: 1,
+      id: '1',
       userId: null,
       noiDung: 'Chào mừng bạn đến với hệ thống thi trắc nghiệm trực tuyến Edutech!',
       loaiIcon: 'info',
@@ -648,7 +648,7 @@ class MockData {
       thoiGian: DateTime.now().subtract(const Duration(hours: 1)),
     ),
     ThongBao(
-      id: 2,
+      id: '2',
       userId: 'u1',
       noiDung: 'Chúc mừng! Bạn đã hoàn thành bài thi TOEIC với số điểm tối đa 10/10.',
       loaiIcon: 'success',
@@ -656,7 +656,7 @@ class MockData {
       thoiGian: DateTime.now().subtract(const Duration(days: 1)),
     ),
     ThongBao(
-      id: 3,
+      id: '3',
       userId: null,
       noiDung: 'Đề thi mới: "Giải thuật & Tư duy Cấu trúc dữ liệu" vừa được cập nhật!',
       loaiIcon: 'warning',

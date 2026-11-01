@@ -8,6 +8,7 @@ import 'providers/auth_provider.dart';
 import 'providers/exam_session_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/quiz_provider.dart';
+import 'services/quiz_repository.dart';
 import 'views/main_layout_shell.dart';
 
 Future<void> main() async {
@@ -19,8 +20,10 @@ Future<void> main() async {
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
     );
+    await QuizRepository().syncFromFirestore();
   } catch (e) {
     debugPrint('Firebase init warning: $e');
+    QuizRepository().isInitialSynced = true;
   }
   runApp(const EdutechQuizApp());
 }

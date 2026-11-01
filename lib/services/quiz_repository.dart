@@ -50,6 +50,7 @@ class QuizRepository {
 
   final FirebaseService _firebase = FirebaseService();
   bool useMockOnly = false;
+  bool isInitialSynced = false;
   String? lastError;
 
   final List<AppUser> _users = [];
@@ -63,6 +64,7 @@ class QuizRepository {
   AppUser? _activeUser;
 
   bool get _useRemote => !useMockOnly && _firebase.isAvailable;
+  bool get isSyncedOrOffline => isInitialSynced || !_useRemote;
 
   AppUser? get activeUser => _activeUser;
   void setActiveUser(AppUser? user) {
@@ -100,11 +102,15 @@ class QuizRepository {
 
   void resetForTesting({bool mockOnly = true}) {
     useMockOnly = mockOnly;
+    isInitialSynced = false;
     _initMockCache();
   }
 
   Future<void> syncFromFirestore() async {
-    if (!_useRemote) return;
+    if (!_useRemote) {
+      isInitialSynced = true;
+      return;
+    }
     try {
       lastError = null;
       final results = await Future.wait([
@@ -169,6 +175,8 @@ class QuizRepository {
       }
     } catch (e) {
       lastError = 'Không thể đồng bộ dữ liệu từ máy chủ: $e';
+    } finally {
+      isInitialSynced = true;
     }
   }
 
@@ -299,14 +307,13 @@ class QuizRepository {
     final exists = _categories.any((c) => c.tenChuDe.toLowerCase() == trimmed.toLowerCase());
     if (exists) return false;
 
-    final nextId = _categories.isEmpty
-        ? 1
-        : _categories.map((c) => c.maChuDe).reduce((a, b) => a > b ? a : b) + 1;
+    final docId = _firebase.generateDocId(FirebaseService.colCategories);
+    final nextId = docId.hashCode.abs() > 0 ? docId.hashCode.abs() : DateTime.now().millisecondsSinceEpoch;
     final newCat = ChuDe(maChuDe: nextId, tenChuDe: trimmed);
     try {
       lastError = null;
       if (_useRemote) {
-        await _firebase.setCategory(newCat);
+        await _firebase.setCategory(newCat, docId: docId);
       }
       _categories.add(newCat);
       return true;
@@ -379,9 +386,8 @@ class QuizRepository {
     required int thoiGian,
     int soCauHoi = 10,
   }) async {
-    final nextId = _exams.isEmpty
-        ? 101
-        : _exams.map((e) => e.maDeThi).reduce((a, b) => a > b ? a : b) + 1;
+    final docId = _firebase.generateDocId(FirebaseService.colExams);
+    final nextId = docId.hashCode.abs() > 0 ? docId.hashCode.abs() : DateTime.now().millisecondsSinceEpoch;
 
     final newExam = DeThi(
       maDeThi: nextId,
@@ -397,7 +403,7 @@ class QuizRepository {
     try {
       lastError = null;
       if (_useRemote) {
-        await _firebase.setExam(newExam);
+        await _firebase.setExam(newExam, docId: docId);
       }
       _exams.add(newExam);
     } catch (e) {
@@ -470,9 +476,8 @@ class QuizRepository {
     String? imagePath,
     String? giaiThich,
   }) async {
-    final nextId = _questions.isEmpty
-        ? 1
-        : _questions.map((q) => q.maCauHoi).reduce((a, b) => a > b ? a : b) + 1;
+    final docId = _firebase.generateDocId(FirebaseService.colQuestions);
+    final nextId = docId.hashCode.abs() > 0 ? docId.hashCode.abs() : DateTime.now().millisecondsSinceEpoch;
 
     final question = CauHoi(
       maCauHoi: nextId,
@@ -493,7 +498,7 @@ class QuizRepository {
     try {
       lastError = null;
       if (_useRemote) {
-        await _firebase.setQuestion(question);
+        await _firebase.setQuestion(question, docId: docId);
       }
       _questions.add(question);
 
@@ -587,9 +592,7 @@ class QuizRepository {
     final score = totalQuestions > 0 ? (correctCount / totalQuestions) * 10.0 : 0.0;
     final roundedScore = double.parse(score.toStringAsFixed(1));
 
-    final nextId = _results.isEmpty
-        ? 1
-        : _results.map((r) => r.maKetQua).reduce((a, b) => a > b ? a : b) + 1;
+    final nextId = _firebase.generateDocId(FirebaseService.colResults);
 
     final user = getUserById(userId);
 
@@ -612,7 +615,7 @@ class QuizRepository {
       try {
         lastError = null;
         if (_useRemote) {
-          await _firebase.setResult(result);
+          await _firebase.setResult(result, docId: nextId);
         }
       } catch (e) {
         lastError = 'Lỗi kết nối mạng khi lưu kết quả thi: $e';
@@ -652,7 +655,7 @@ class QuizRepository {
     }).toList();
   }
 
-  KetQuaThi? getResultById(int id) {
+  KetQuaThi? getResultById(String id) {
     try {
       final r = _results.firstWhere((res) => res.maKetQua == id);
       return KetQuaThi(
@@ -674,7 +677,7 @@ class QuizRepository {
     }
   }
 
-  Future<bool> deleteResult(int id) async {
+  Future<bool> deleteResult(String id) async {
     try {
       lastError = null;
       if (_useRemote) {
@@ -775,9 +778,7 @@ class QuizRepository {
       _bookmarks.removeAt(idx);
       return false;
     } else {
-      final nextId = _bookmarks.isEmpty
-          ? 1
-          : _bookmarks.map((b) => b.id).reduce((a, b) => a > b ? a : b) + 1;
+      final nextId = _firebase.generateDocId(FirebaseService.colBookmarks);
       final added = DeThiYeuThich(
         id: nextId,
         userId: userId,
@@ -787,7 +788,7 @@ class QuizRepository {
       try {
         lastError = null;
         if (_useRemote) {
-          await _firebase.setBookmark(added);
+          await _firebase.setBookmark(added, docId: nextId);
         }
       } catch (e) {
         lastError = 'Lỗi kết nối mạng khi lưu đề thi: $e';
@@ -829,13 +830,11 @@ class QuizRepository {
       _mistakes[idx] = updated;
       if (_useRemote) {
         try {
-          await _firebase.setMistake(updated);
+          await _firebase.setMistake(updated, docId: updated.id);
         } catch (_) {}
       }
     } else {
-      final nextId = _mistakes.isEmpty
-          ? 1
-          : _mistakes.map((m) => m.id).reduce((a, b) => a > b ? a : b) + 1;
+      final nextId = _firebase.generateDocId(FirebaseService.colMistakes);
       final created = CauHoiSai(
         id: nextId,
         userId: userId,
@@ -847,7 +846,7 @@ class QuizRepository {
       _mistakes.add(created);
       if (_useRemote) {
         try {
-          await _firebase.setMistake(created);
+          await _firebase.setMistake(created, docId: nextId);
         } catch (_) {}
       }
     }
@@ -873,14 +872,14 @@ class QuizRepository {
         _mistakes[idx] = updated;
         if (_useRemote) {
           try {
-            await _firebase.setMistake(updated);
+            await _firebase.setMistake(updated, docId: updated.id);
           } catch (_) {}
         }
       }
     }
   }
 
-  Future<bool> deleteMistake(int id) async {
+  Future<bool> deleteMistake(String id) async {
     try {
       lastError = null;
       if (_useRemote) {
@@ -907,7 +906,7 @@ class QuizRepository {
     return _notifications.where((n) => (n.userId == null || n.userId == userId) && !n.daDoc).length;
   }
 
-  Future<void> markAsRead(int id) async {
+  Future<void> markAsRead(String id) async {
     final idx = _notifications.indexWhere((n) => n.id == id);
     if (idx != -1) {
       _notifications[idx] = _notifications[idx].copyWith(daDoc: true);
@@ -937,9 +936,7 @@ class QuizRepository {
     String? userId,
     String loaiIcon = 'info',
   }) async {
-    final nextId = _notifications.isEmpty
-        ? 1
-        : _notifications.map((n) => n.id).reduce((a, b) => a > b ? a : b) + 1;
+    final nextId = _firebase.generateDocId(FirebaseService.colNotifications);
     final notif = ThongBao(
       id: nextId,
       userId: userId,
@@ -951,7 +948,7 @@ class QuizRepository {
     _notifications.insert(0, notif);
     if (_useRemote) {
       try {
-        await _firebase.setNotification(notif);
+        await _firebase.setNotification(notif, docId: nextId);
       } catch (_) {}
     }
   }

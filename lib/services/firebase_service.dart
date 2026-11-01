@@ -27,17 +27,20 @@ class FirebaseService {
   bool get isAvailable => Firebase.apps.isNotEmpty;
 
   FirebaseFirestore get _db => FirebaseFirestore.instance;
+  int _localDocCounter = 0;
 
   String generateDocId(String collection) {
     if (!isAvailable) {
-      return '${DateTime.now().microsecondsSinceEpoch}';
+      _localDocCounter++;
+      return '${collection}_${DateTime.now().microsecondsSinceEpoch}_$_localDocCounter';
     }
     return _db.collection(collection).doc().id;
   }
 
   int generateHashId(String collection) {
     final docId = generateDocId(collection);
-    return docId.hashCode.abs();
+    final hash = docId.hashCode.abs();
+    return hash > 0 ? hash : DateTime.now().millisecondsSinceEpoch;
   }
 
   Future<bool> checkConnection({Duration timeout = const Duration(seconds: 5)}) async {
@@ -220,13 +223,14 @@ class FirebaseService {
     final snap = await query.get();
     return snap.docs.map((d) {
       final data = Map<String, dynamic>.from(d.data());
+      data['maKetQua'] ??= d.id;
       return KetQuaThi.fromJson(data);
     }).toList();
   }
 
   Future<void> setResult(KetQuaThi result, {String? docId}) async {
     if (!isAvailable) return;
-    final id = docId ?? result.maKetQua.toString();
+    final id = docId ?? result.maKetQua;
     final json = result.toJson();
     if (result.userName != null) {
       json['userName'] = result.userName;
@@ -234,7 +238,7 @@ class FirebaseService {
     await _db.collection(colResults).doc(id).set(json);
   }
 
-  Future<void> deleteResult(dynamic maKetQua) async {
+  Future<void> deleteResult(String maKetQua) async {
     if (!isAvailable) return;
     final snap = await _db
         .collection(colResults)
@@ -243,7 +247,7 @@ class FirebaseService {
     for (final doc in snap.docs) {
       await doc.reference.delete();
     }
-    await _db.collection(colResults).doc(maKetQua.toString()).delete();
+    await _db.collection(colResults).doc(maKetQua).delete();
   }
 
   // ================= MISTAKES =================
@@ -254,16 +258,20 @@ class FirebaseService {
       query = query.where('userId', isEqualTo: userId);
     }
     final snap = await query.get();
-    return snap.docs.map((d) => CauHoiSai.fromJson(d.data())).toList();
+    return snap.docs.map((d) {
+      final data = Map<String, dynamic>.from(d.data());
+      data['id'] ??= d.id;
+      return CauHoiSai.fromJson(data);
+    }).toList();
   }
 
   Future<void> setMistake(CauHoiSai mistake, {String? docId}) async {
     if (!isAvailable) return;
-    final id = docId ?? mistake.id.toString();
+    final id = docId ?? mistake.id;
     await _db.collection(colMistakes).doc(id).set(mistake.toJson());
   }
 
-  Future<void> deleteMistake(dynamic id) async {
+  Future<void> deleteMistake(String id) async {
     if (!isAvailable) return;
     final snap = await _db
         .collection(colMistakes)
@@ -272,7 +280,7 @@ class FirebaseService {
     for (final doc in snap.docs) {
       await doc.reference.delete();
     }
-    await _db.collection(colMistakes).doc(id.toString()).delete();
+    await _db.collection(colMistakes).doc(id).delete();
   }
 
   // ================= BOOKMARKS =================
@@ -283,16 +291,20 @@ class FirebaseService {
       query = query.where('userId', isEqualTo: userId);
     }
     final snap = await query.get();
-    return snap.docs.map((d) => DeThiYeuThich.fromJson(d.data())).toList();
+    return snap.docs.map((d) {
+      final data = Map<String, dynamic>.from(d.data());
+      data['id'] ??= d.id;
+      return DeThiYeuThich.fromJson(data);
+    }).toList();
   }
 
   Future<void> setBookmark(DeThiYeuThich bookmark, {String? docId}) async {
     if (!isAvailable) return;
-    final id = docId ?? bookmark.id.toString();
+    final id = docId ?? bookmark.id;
     await _db.collection(colBookmarks).doc(id).set(bookmark.toJson());
   }
 
-  Future<void> deleteBookmark(dynamic id) async {
+  Future<void> deleteBookmark(String id) async {
     if (!isAvailable) return;
     final snap = await _db
         .collection(colBookmarks)
@@ -301,26 +313,34 @@ class FirebaseService {
     for (final doc in snap.docs) {
       await doc.reference.delete();
     }
-    await _db.collection(colBookmarks).doc(id.toString()).delete();
+    await _db.collection(colBookmarks).doc(id).delete();
   }
 
   // ================= NOTIFICATIONS =================
   Future<List<ThongBao>> getNotifications() async {
     if (!isAvailable) return [];
     final snap = await _db.collection(colNotifications).get();
-    return snap.docs.map((d) => ThongBao.fromJson(d.data())).toList();
+    return snap.docs.map((d) {
+      final data = Map<String, dynamic>.from(d.data());
+      data['id'] ??= d.id;
+      return ThongBao.fromJson(data);
+    }).toList();
   }
 
   Stream<List<ThongBao>> watchNotifications() {
     if (!isAvailable) return const Stream.empty();
     return _db.collection(colNotifications).snapshots().map(
-          (snap) => snap.docs.map((d) => ThongBao.fromJson(d.data())).toList(),
+          (snap) => snap.docs.map((d) {
+            final data = Map<String, dynamic>.from(d.data());
+            data['id'] ??= d.id;
+            return ThongBao.fromJson(data);
+          }).toList(),
         );
   }
 
   Future<void> setNotification(ThongBao notification, {String? docId}) async {
     if (!isAvailable) return;
-    final id = docId ?? notification.id.toString();
+    final id = docId ?? notification.id;
     await _db.collection(colNotifications).doc(id).set(notification.toJson());
   }
 
@@ -335,7 +355,7 @@ class FirebaseService {
         await doc.reference.set(notification.toJson(), SetOptions(merge: true));
       }
     } else {
-      await _db.collection(colNotifications).doc(notification.id.toString()).set(notification.toJson(), SetOptions(merge: true));
+      await _db.collection(colNotifications).doc(notification.id).set(notification.toJson(), SetOptions(merge: true));
     }
   }
 }

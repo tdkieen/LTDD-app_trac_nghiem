@@ -50,7 +50,7 @@ class ChiTietKetQua {
 }
 
 class KetQuaThi {
-  final int maKetQua;
+  final String maKetQua;
   final String userId;
   final int maDeThi;
   final double tongDiem; // 0.0 - 10.0
@@ -111,7 +111,7 @@ class KetQuaThi {
     }
 
     return KetQuaThi(
-      maKetQua: json['maKetQua'] ?? 0,
+      maKetQua: (json['maKetQua'] ?? '').toString(),
       userId: json['userId'] ?? '',
       maDeThi: json['maDeThi'] ?? 0,
       tongDiem: (json['tongDiem'] as num?)?.toDouble() ?? 0.0,

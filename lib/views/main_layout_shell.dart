@@ -69,9 +69,41 @@ class _MainLayoutShellState extends State<MainLayoutShell> {
     });
   }
 
-  void _startExam(DeThi exam, bool isPractice) {
+  Future<void> _startExam(DeThi exam, bool isPractice) async {
     final session = context.read<ExamSessionProvider>();
-    session.startExam(exam: exam, isPractice: isPractice);
+    final hasSaved = await session.hasSavedProgress(exam.maDeThi, isPractice: isPractice);
+    if (hasSaved && mounted) {
+      final resume = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Tiếp tục bài đang làm?'),
+          content: Text(
+            'Hệ thống phát hiện bạn đang có bài làm dở ở đề "${exam.tenDeThi}". Bạn có muốn tiếp tục bài đang làm không?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Làm lại từ đầu'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Tiếp tục'),
+            ),
+          ],
+        ),
+      );
+      if (resume == null || !mounted) return;
+      if (resume) {
+        await session.restoreSavedProgress(exam: exam, isPractice: isPractice);
+      } else {
+        await session.clearSavedProgress(exam.maDeThi, isPractice: isPractice);
+        session.startExam(exam: exam, isPractice: isPractice);
+      }
+    } else {
+      session.startExam(exam: exam, isPractice: isPractice);
+    }
+    if (!mounted) return;
     setState(() {
       _isTakingExam = true;
       _viewingResult = null;

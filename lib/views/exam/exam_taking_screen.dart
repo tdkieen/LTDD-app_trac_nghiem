@@ -194,12 +194,14 @@ class _ExamTakingScreenState extends State<ExamTakingScreen> with WidgetsBinding
               context: context,
               builder: (ctx) => AlertDialog(
                 title: const Text('Dừng làm bài?'),
-                content: const Text('Tiến trình làm bài hiện tại sẽ không được lưu nếu bạn thoát.'),
+                content: const Text('Tiến trình làm bài hiện tại sẽ được tự động lưu lại để bạn có thể tiếp tục sau.'),
                 actions: [
                   TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Ở lại')),
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
+                    onPressed: () async {
+                      final nav = Navigator.of(ctx);
+                      await context.read<ExamSessionProvider>().pauseExam();
+                      nav.pop();
                       widget.onExit();
                     },
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),

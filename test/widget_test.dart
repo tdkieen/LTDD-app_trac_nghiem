@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:app_trac_nghiem/main.dart';
+import 'package:app_trac_nghiem/services/quiz_repository.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    QuizRepository().resetForTesting(mockOnly: true);
+  });
+
   testWidgets('Edutech Quiz App auth and desktop smoke test', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(1280, 800);
     tester.view.devicePixelRatio = 1.0;

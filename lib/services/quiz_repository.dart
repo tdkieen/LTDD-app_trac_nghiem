@@ -345,6 +345,7 @@ class QuizRepository {
     required int thoiGianLamGiay,
     List<CauHoi>? questions,
     bool isPractice = false,
+    bool isMistakePractice = false,
     int soLanViPham = 0,
   }) {
     final exam = getExamById(maDeThi);
@@ -357,6 +358,9 @@ class QuizRepository {
       final isCorrect = chosen != null && chosen.toUpperCase() == (q.dapAnDung ?? '').toUpperCase();
       if (isCorrect) {
         correctCount++;
+        if (isMistakePractice || maDeThi == 9999) {
+          resolveMistake(userId: userId, maCauHoi: q.maCauHoi);
+        }
       } else if (!isPractice) {
         // Record into Mistake Notebook only when not in practice mode
         recordMistake(userId: userId, maCauHoi: q.maCauHoi, dapAnDaChon: chosen);
@@ -591,6 +595,22 @@ class QuizRepository {
         lanSai: 1,
         lanCuoiSai: DateTime.now(),
       ));
+    }
+  }
+
+  void resolveMistake({
+    required String userId,
+    required int maCauHoi,
+  }) {
+    final idx = _mistakes.indexWhere((m) => m.userId == userId && m.maCauHoi == maCauHoi);
+    if (idx != -1) {
+      final existing = _mistakes[idx];
+      final newLanSai = existing.lanSai - 1;
+      if (newLanSai <= 0) {
+        _mistakes.removeAt(idx);
+      } else {
+        _mistakes[idx] = existing.copyWith(lanSai: newLanSai);
+      }
     }
   }
 

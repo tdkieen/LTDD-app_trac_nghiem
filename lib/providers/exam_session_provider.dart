@@ -11,6 +11,7 @@ class ExamSessionProvider extends ChangeNotifier {
   DeThi? _currentExam;
   List<CauHoi> _questions = [];
   bool _isPractice = false;
+  bool _isMistakePractice = false;
   int _currentIndex = 0;
   final Map<int, String> _answers = {}; // maCauHoi -> 'A', 'B', 'C', 'D'
   int _totalSeconds = 0;
@@ -26,6 +27,7 @@ class ExamSessionProvider extends ChangeNotifier {
   DeThi? get currentExam => _currentExam;
   List<CauHoi> get questions => _questions;
   bool get isPractice => _isPractice;
+  bool get isMistakePractice => _isMistakePractice;
   int get currentIndex => _currentIndex;
   Map<int, String> get answers => Map.unmodifiable(_answers);
   int get secondsRemaining => _secondsRemaining;
@@ -63,6 +65,7 @@ class ExamSessionProvider extends ChangeNotifier {
     _timer?.cancel();
     _currentExam = exam;
     _isPractice = isPractice;
+    _isMistakePractice = false;
     _currentIndex = 0;
     _answers.clear();
     _cheatWarnings = 0;
@@ -90,6 +93,7 @@ class ExamSessionProvider extends ChangeNotifier {
   }) {
     _timer?.cancel();
     _isPractice = true;
+    _isMistakePractice = true;
     _currentIndex = 0;
     _answers.clear();
     _cheatWarnings = 0;
@@ -181,6 +185,7 @@ class ExamSessionProvider extends ChangeNotifier {
       thoiGianLamGiay: timeSpent > 0 ? timeSpent : 30,
       questions: _questions,
       isPractice: _isPractice,
+      isMistakePractice: _isMistakePractice,
       soLanViPham: _cheatWarnings,
     );
 

@@ -27,11 +27,13 @@ class OverallLeaderboardItem {
 }
 
 class ExamLeaderboardItem {
+  final String userId;
   final String userName;
   final double highestScore;
   final DateTime date;
 
   ExamLeaderboardItem({
+    this.userId = '',
     required this.userName,
     required this.highestScore,
     required this.date,
@@ -463,9 +465,12 @@ class QuizRepository {
     final Map<String, ExamLeaderboardItem> map = {};
 
     for (final r in examResults) {
-      final userName = r.userName ?? 'Thí sinh';
-      if (!map.containsKey(userName) || (r.tongDiem > map[userName]!.highestScore)) {
-        map[userName] = ExamLeaderboardItem(
+      final uid = r.userId.isNotEmpty ? r.userId : (r.userName ?? 'guest');
+      final user = getUserById(r.userId);
+      final userName = r.userName ?? user?.fullName ?? user?.userName ?? 'Thí sinh';
+      if (!map.containsKey(uid) || (r.tongDiem > map[uid]!.highestScore)) {
+        map[uid] = ExamLeaderboardItem(
+          userId: uid,
           userName: userName,
           highestScore: r.tongDiem,
           date: r.ngayThi,

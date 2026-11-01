@@ -5,6 +5,21 @@ import '../services/quiz_repository.dart';
 class NotificationProvider extends ChangeNotifier {
   final QuizRepository _repo = QuizRepository();
 
+  NotificationProvider() {
+    _repo.startRealtimeListeners();
+    _repo.dataVersion.addListener(_onRepoDataChanged);
+  }
+
+  void _onRepoDataChanged() {
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _repo.dataVersion.removeListener(_onRepoDataChanged);
+    super.dispose();
+  }
+
   List<ThongBao> getNotifications(String? userId) {
     return _repo.getNotifications(userId);
   }

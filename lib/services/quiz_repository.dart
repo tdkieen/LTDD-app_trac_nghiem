@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import '../models/app_user.dart';
 import '../models/chu_de.dart';
 import '../models/de_thi.dart';
@@ -52,6 +54,11 @@ class QuizRepository {
   bool useMockOnly = false;
   bool isInitialSynced = false;
   String? lastError;
+  final ValueNotifier<int> dataVersion = ValueNotifier<int>(0);
+
+  StreamSubscription<List<DeThi>>? _examsSub;
+  StreamSubscription<List<CauHoi>>? _questionsSub;
+  StreamSubscription<List<ThongBao>>? _notificationsSub;
 
   final List<AppUser> _users = [];
   final List<ChuDe> _categories = [];
@@ -101,9 +108,60 @@ class QuizRepository {
   }
 
   void resetForTesting({bool mockOnly = true}) {
+    stopRealtimeListeners();
     useMockOnly = mockOnly;
     isInitialSynced = false;
     _initMockCache();
+  }
+
+  Stream<List<DeThi>> watchExams() => _firebase.watchExams();
+  Stream<List<CauHoi>> watchQuestions() => _firebase.watchQuestions();
+  Stream<List<ThongBao>> watchNotifications() => _firebase.watchNotifications();
+
+  void startRealtimeListeners() {
+    if (!_useRemote) return;
+    _examsSub ??= _firebase.watchExams().listen(
+      (remoteExams) {
+        if (remoteExams.isNotEmpty) {
+          _exams
+            ..clear()
+            ..addAll(remoteExams);
+          dataVersion.value++;
+        }
+      },
+      onError: (_) {},
+    );
+    _questionsSub ??= _firebase.watchQuestions().listen(
+      (remoteQuestions) {
+        if (remoteQuestions.isNotEmpty) {
+          _questions
+            ..clear()
+            ..addAll(remoteQuestions);
+          dataVersion.value++;
+        }
+      },
+      onError: (_) {},
+    );
+    _notificationsSub ??= _firebase.watchNotifications().listen(
+      (remoteNotifs) {
+        if (remoteNotifs.isNotEmpty) {
+          _notifications
+            ..clear()
+            ..addAll(remoteNotifs);
+          dataVersion.value++;
+        }
+      },
+      onError: (_) {},
+    );
+  }
+
+  void stopRealtimeListeners() {
+    _examsSub?.cancel();
+    _examsSub = null;
+    _questionsSub?.cancel();
+    _questionsSub = null;
+    _notificationsSub?.cancel();
+    _notificationsSub = null;
   }
 
   Future<void> syncFromFirestore() async {
@@ -177,6 +235,7 @@ class QuizRepository {
       lastError = 'Không thể đồng bộ dữ liệu từ máy chủ: $e';
     } finally {
       isInitialSynced = true;
+      startRealtimeListeners();
     }
   }
 

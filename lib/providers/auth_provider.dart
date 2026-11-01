@@ -58,7 +58,7 @@ class AuthProvider extends ChangeNotifier {
     return ok;
   }
 
-  bool login(String usernameOrEmail, String password) {
+  Future<bool> login(String usernameOrEmail, String password) async {
     _errorMessage = null;
     final trimmedUser = usernameOrEmail.trim();
     final trimmedPass = password.trim();
@@ -69,7 +69,11 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
 
-    final user = _repo.authenticate(trimmedUser, trimmedPass);
+    _isLoading = true;
+    notifyListeners();
+
+    final user = await _repo.authenticate(trimmedUser, trimmedPass);
+    _isLoading = false;
     if (user != null) {
       _currentUser = user;
       _repo.setActiveUser(_currentUser);
@@ -77,7 +81,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } else {
-      _errorMessage = 'Tên đăng nhập hoặc mật khẩu không chính xác';
+      _errorMessage = _repo.lastError ?? 'Tên đăng nhập hoặc mật khẩu không chính xác';
       notifyListeners();
       return false;
     }
@@ -125,7 +129,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     final newUser = AppUser(
-      id: 'u_${DateTime.now().millisecondsSinceEpoch}',
+      id: '',
       userName: u,
       fullName: name,
       email: e,
@@ -136,10 +140,10 @@ class AuthProvider extends ChangeNotifier {
       avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     );
 
-    final success = await _repo.addUser(newUser);
+    final created = await _repo.registerUser(newUser);
     _isLoading = false;
-    if (success) {
-      _currentUser = newUser;
+    if (created != null) {
+      _currentUser = created;
       _repo.setActiveUser(_currentUser);
       _errorMessage = null;
       notifyListeners();
@@ -149,6 +153,20 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  Future<bool> seedSampleData() async {
+    if (!kDebugMode || !isAdmin) return false;
+    _isLoading = true;
+    notifyListeners();
+    final ok = await _repo.seedSampleData();
+    if (ok && _repo.activeUser != null) {
+      _currentUser = _repo.activeUser;
+    }
+    _errorMessage = _repo.lastError;
+    _isLoading = false;
+    notifyListeners();
+    return ok;
   }
 
   Future<void> updateProfile({
@@ -167,9 +185,9 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void logout() {
+  Future<void> logout() async {
     _currentUser = null;
-    _repo.setActiveUser(null);
+    await _repo.signOut();
     _errorMessage = null;
     notifyListeners();
   }

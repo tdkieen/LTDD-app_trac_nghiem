@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/app_user.dart';
 import '../models/chu_de.dart';
@@ -260,36 +261,250 @@ class QuizRepository {
     return _users.any((u) => u.email.toLowerCase() == query);
   }
 
-  Future<bool> addUser(AppUser user) async {
+  Future<AppUser?> registerUser(AppUser user) async {
     if (isUsernameTaken(user.userName) || isEmailTaken(user.email)) {
-      return false;
+      return null;
     }
     try {
       lastError = null;
+      AppUser createdUser = user;
       if (_useRemote) {
-        await _firebase.setUser(user);
+        final cred = await _firebase.createUserWithEmailAndPassword(
+          user.email,
+          user.password,
+        );
+        final uid = cred.user?.uid ?? _firebase.generateDocId(FirebaseService.colUsers);
+        createdUser = user.copyWith(id: uid);
+        await _firebase.setUser(createdUser);
+      } else if (createdUser.id.isEmpty) {
+        createdUser = user.copyWith(
+          id: _firebase.generateDocId(FirebaseService.colUsers),
+        );
       }
-      _users.add(user);
-      return true;
+      _users.removeWhere((u) => u.id == createdUser.id || u.email.toLowerCase() == createdUser.email.toLowerCase());
+      _users.add(createdUser);
+      _activeUser = createdUser;
+      return createdUser;
+    } on FirebaseAuthException catch (e) {
+      lastError = 'Lỗi đăng ký FirebaseAuth (${e.code}): ${e.message ?? e.code}';
+      return null;
     } catch (e) {
-      lastError = 'Lỗi kết nối mạng khi thêm người dùng: $e';
-      return false;
+      lastError = 'Lỗi kết nối mạng khi đăng ký người dùng: $e';
+      return null;
     }
   }
 
-  AppUser? authenticate(String usernameOrEmail, String password) {
-    final query = usernameOrEmail.trim().toLowerCase();
+  Future<bool> addUser(AppUser user) async {
+    final created = await registerUser(user);
+    return created != null;
+  }
+
+  Future<AppUser?> authenticate(String usernameOrEmail, String password) async {
+    final query = usernameOrEmail.trim();
+    final lowerQuery = query.toLowerCase();
+    final trimmedPass = password.trim();
+
+    if (_useRemote) {
+      try {
+        lastError = null;
+        String email = query;
+        AppUser? matchedLocal;
+        for (final u in _users) {
+          if (u.userName.toLowerCase() == lowerQuery || u.email.toLowerCase() == lowerQuery) {
+            matchedLocal = u;
+            break;
+          }
+        }
+        if (!email.contains('@')) {
+          if (matchedLocal != null) {
+            email = matchedLocal.email;
+          } else {
+            final remoteMatch = await _firebase.getUserByUsernameOrEmail(query);
+            if (remoteMatch != null) {
+              matchedLocal = remoteMatch;
+              email = remoteMatch.email;
+            } else {
+              for (final m in MockData.initialUsers) {
+                if (m.userName.toLowerCase() == lowerQuery) {
+                  matchedLocal = m;
+                  email = m.email;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        final cred = await _firebase.signInWithEmailAndPassword(email, trimmedPass);
+        final uid = cred.user!.uid;
+
+        AppUser? profile = await _firebase.getUserById(uid);
+        if (profile == null) {
+          final baseUser = matchedLocal ??
+              AppUser(
+                id: uid,
+                userName: email.split('@').first,
+                fullName: email.split('@').first,
+                email: email,
+                role: UserRole.student,
+              );
+          profile = baseUser.copyWith(id: uid);
+          await _firebase.setUser(profile);
+        }
+
+        final idx = _users.indexWhere(
+          (u) => u.id == uid || u.email.toLowerCase() == profile!.email.toLowerCase(),
+        );
+        if (idx != -1) {
+          _users[idx] = profile;
+        } else {
+          _users.add(profile);
+        }
+        _activeUser = profile;
+        return profile;
+      } on FirebaseAuthException catch (e) {
+        lastError = 'Đăng nhập thất bại (${e.code})';
+        return null;
+      } catch (e) {
+        lastError = 'Lỗi kết nối khi đăng nhập: $e';
+        return null;
+      }
+    }
+
     try {
       final user = _users.firstWhere(
-        (u) => u.userName.toLowerCase() == query || u.email.toLowerCase() == query,
+        (u) => u.userName.toLowerCase() == lowerQuery || u.email.toLowerCase() == lowerQuery,
       );
-      if (user.password == password.trim()) {
+      if (user.password == trimmedPass) {
         _activeUser = user;
         return user;
       }
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<void> signOut() async {
+    _activeUser = null;
+    if (_useRemote) {
+      try {
+        await _firebase.signOut();
+      } catch (_) {}
+    }
+  }
+
+  Future<bool> seedSampleData() async {
+    if (!kDebugMode || _activeUser == null || !_activeUser!.isAdmin) {
+      lastError = 'Chỉ Admin ở chế độ Debug mới được tạo dữ liệu mẫu';
+      return false;
+    }
+
+    final currentAdmin = _activeUser!;
+    try {
+      lastError = null;
+      final Map<String, String> userIdMap = {};
+
+      if (_useRemote) {
+        for (final mockUser in MockData.initialUsers) {
+          String uid = mockUser.id;
+          try {
+            final cred = await _firebase.createUserWithEmailAndPassword(
+              mockUser.email,
+              mockUser.password,
+            );
+            uid = cred.user?.uid ?? mockUser.id;
+          } on FirebaseAuthException catch (e) {
+            if (e.code == 'email-already-in-use') {
+              try {
+                final cred = await _firebase.signInWithEmailAndPassword(
+                  mockUser.email,
+                  mockUser.password,
+                );
+                uid = cred.user?.uid ?? mockUser.id;
+              } catch (_) {}
+            }
+          }
+          userIdMap[mockUser.id] = uid;
+          final seededUser = mockUser.copyWith(id: uid);
+          await _firebase.setUser(seededUser);
+        }
+
+        for (final cat in MockData.initialCategories) {
+          await _firebase.setCategory(cat, docId: cat.maChuDe.toString());
+        }
+        for (final exam in MockData.initialExams) {
+          await _firebase.setExam(exam, docId: exam.maDeThi.toString());
+        }
+        for (final q in MockData.initialQuestions) {
+          await _firebase.setQuestion(q, docId: q.maCauHoi.toString());
+        }
+        for (final r in MockData.initialResults) {
+          final mappedUid = userIdMap[r.userId] ?? r.userId;
+          final seededResult = KetQuaThi(
+            maKetQua: r.maKetQua,
+            userId: mappedUid,
+            maDeThi: r.maDeThi,
+            tongDiem: r.tongDiem,
+            soCauDung: r.soCauDung,
+            tongSoCau: r.tongSoCau,
+            thoiGianLamGiay: r.thoiGianLamGiay,
+            ngayThi: r.ngayThi,
+            chiTiet: r.chiTiet,
+            deThi: r.deThi,
+            userName: r.userName,
+            soLanViPham: r.soLanViPham,
+          );
+          await _firebase.setResult(seededResult, docId: r.maKetQua);
+        }
+        for (final m in MockData.initialMistakes) {
+          final mappedUid = userIdMap[m.userId] ?? m.userId;
+          final seededMistake = m.copyWith(userId: mappedUid);
+          await _firebase.setMistake(seededMistake, docId: m.id);
+        }
+        for (final b in MockData.initialBookmarks) {
+          final mappedUid = userIdMap[b.userId] ?? b.userId;
+          final seededBookmark = DeThiYeuThich(
+            id: b.id,
+            userId: mappedUid,
+            maDeThi: b.maDeThi,
+            deThi: b.deThi,
+            ngayLuu: b.ngayLuu,
+          );
+          await _firebase.setBookmark(seededBookmark, docId: b.id);
+        }
+        for (final n in MockData.initialNotifications) {
+          final mappedUid = n.userId != null ? (userIdMap[n.userId!] ?? n.userId) : null;
+          final seededNotif = ThongBao(
+            id: n.id,
+            userId: mappedUid,
+            noiDung: n.noiDung,
+            loaiIcon: n.loaiIcon,
+            daDoc: n.daDoc,
+            thoiGian: n.thoiGian,
+          );
+          await _firebase.setNotification(seededNotif, docId: n.id);
+        }
+
+        // Re-authenticate admin if possible
+        try {
+          await _firebase.signInWithEmailAndPassword(
+            currentAdmin.email,
+            currentAdmin.password,
+          );
+        } catch (_) {}
+
+        await syncFromFirestore();
+        _activeUser = getUserById(userIdMap[currentAdmin.id] ?? currentAdmin.id) ?? currentAdmin;
+      } else {
+        _initMockCache();
+        _activeUser = currentAdmin;
+      }
+      dataVersion.value++;
+      return true;
+    } catch (e) {
+      lastError = 'Lỗi tạo dữ liệu mẫu: $e';
+      return false;
     }
   }
 

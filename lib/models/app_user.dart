@@ -91,7 +91,6 @@ class AppUser {
     'userName': userName,
     'fullName': fullName,
     'email': email,
-    'password': password,
     'phoneNumber': phoneNumber,
     'avatarUrl': avatarUrl,
     'role': role.name,

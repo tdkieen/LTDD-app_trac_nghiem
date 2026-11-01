@@ -55,10 +55,10 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (!_loginFormKey.currentState!.validate()) return;
     final auth = context.read<AuthProvider>();
-    final ok = auth.login(_loginUserCtrl.text, _loginPassCtrl.text);
+    final ok = await auth.login(_loginUserCtrl.text, _loginPassCtrl.text);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -69,11 +69,19 @@ class _AuthScreenState extends State<AuthScreen> {
     }
   }
 
-  void _handleQuickLogin(String username, String password) {
+  Future<void> _handleQuickLogin(String username, String password) async {
     _loginUserCtrl.text = username;
     _loginPassCtrl.text = password;
     final auth = context.read<AuthProvider>();
-    auth.login(username, password);
+    final ok = await auth.login(username, password);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.errorMessage ?? 'Đăng nhập thất bại'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   Future<void> _handleRegister() async {

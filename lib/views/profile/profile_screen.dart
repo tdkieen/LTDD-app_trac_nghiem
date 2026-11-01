@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -109,14 +110,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final createdStr = DateFormat('dd/MM/yyyy').format(user.ngayTao);
 
-    final logoutButton = OutlinedButton.icon(
-      onPressed: () => context.read<AuthProvider>().logout(),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.danger,
-        side: const BorderSide(color: AppColors.danger),
-      ),
-      icon: const Icon(Icons.logout, size: 16),
-      label: const Text('Đăng xuất'),
+    final logoutButton = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (kDebugMode && user.isAdmin) ...[
+          ElevatedButton.icon(
+            onPressed: auth.isLoading
+                ? null
+                : () async {
+                    final ok = await context.read<AuthProvider>().seedSampleData();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            ok
+                                ? 'Đã tạo dữ liệu mẫu thành công!'
+                                : (auth.errorMessage ?? 'Không thể tạo dữ liệu mẫu'),
+                          ),
+                          backgroundColor: ok ? AppColors.success : AppColors.danger,
+                        ),
+                      );
+                    }
+                  },
+            icon: const Icon(Icons.dataset_outlined, size: 16),
+            label: const Text('Tạo dữ liệu mẫu'),
+          ),
+          const SizedBox(width: 10),
+        ],
+        OutlinedButton.icon(
+          onPressed: () => context.read<AuthProvider>().logout(),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.danger,
+            side: const BorderSide(color: AppColors.danger),
+          ),
+          icon: const Icon(Icons.logout, size: 16),
+          label: const Text('Đăng xuất'),
+        ),
+      ],
     );
 
     return SingleChildScrollView(

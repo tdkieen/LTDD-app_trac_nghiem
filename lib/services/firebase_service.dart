@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../models/app_user.dart';
 import '../models/chu_de.dart';
@@ -27,7 +28,22 @@ class FirebaseService {
   bool get isAvailable => Firebase.apps.isNotEmpty;
 
   FirebaseFirestore get _db => FirebaseFirestore.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
+  String? get currentAuthUid => isAvailable ? _auth.currentUser?.uid : null;
   int _localDocCounter = 0;
+
+  Future<UserCredential> signInWithEmailAndPassword(String email, String password) {
+    return _auth.signInWithEmailAndPassword(email: email.trim(), password: password);
+  }
+
+  Future<UserCredential> createUserWithEmailAndPassword(String email, String password) {
+    return _auth.createUserWithEmailAndPassword(email: email.trim(), password: password);
+  }
+
+  Future<void> signOut() async {
+    if (!isAvailable) return;
+    await _auth.signOut();
+  }
 
   String generateDocId(String collection) {
     if (!isAvailable) {
@@ -73,8 +89,28 @@ class FirebaseService {
     final doc = await _db.collection(colUsers).doc(id).get();
     if (!doc.exists || doc.data() == null) return null;
     final data = Map<String, dynamic>.from(doc.data()!);
-    data['id'] ??= doc.id;
+    data['id'] = doc.id;
     return AppUser.fromJson(data);
+  }
+
+  Future<AppUser?> getUserByUsernameOrEmail(String query) async {
+    if (!isAvailable) return null;
+    final q = query.trim();
+    final byEmail = await _db.collection(colUsers).where('email', isEqualTo: q).limit(1).get();
+    if (byEmail.docs.isNotEmpty) {
+      final d = byEmail.docs.first;
+      final data = Map<String, dynamic>.from(d.data());
+      data['id'] = d.id;
+      return AppUser.fromJson(data);
+    }
+    final byUser = await _db.collection(colUsers).where('userName', isEqualTo: q).limit(1).get();
+    if (byUser.docs.isNotEmpty) {
+      final d = byUser.docs.first;
+      final data = Map<String, dynamic>.from(d.data());
+      data['id'] = d.id;
+      return AppUser.fromJson(data);
+    }
+    return null;
   }
 
   Future<void> setUser(AppUser user) async {

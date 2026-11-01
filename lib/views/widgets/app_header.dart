@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
@@ -65,6 +66,32 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
           // Custom actions
           ...?actions,
+
+          // Debug Admin Seed Sample Data button
+          if (kDebugMode && user != null && user.isAdmin) ...[
+            TextButton.icon(
+              onPressed: auth.isLoading
+                  ? null
+                  : () async {
+                      final ok = await context.read<AuthProvider>().seedSampleData();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? 'Đã tạo dữ liệu mẫu trên Firebase thành công!'
+                                  : (context.read<AuthProvider>().errorMessage ?? 'Không thể tạo dữ liệu mẫu'),
+                            ),
+                            backgroundColor: ok ? AppColors.success : AppColors.danger,
+                          ),
+                        );
+                      }
+                    },
+              icon: const Icon(Icons.dataset_outlined, size: 16),
+              label: Text(isMobile ? 'Seed' : 'Tạo dữ liệu mẫu', style: const TextStyle(fontSize: 12)),
+            ),
+            const SizedBox(width: 4),
+          ],
 
           // Role Badge (Read-only status badge, role managed by account)
           if (user != null) ...[

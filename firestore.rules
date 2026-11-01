@@ -10,11 +10,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isSignedIn() && currentUserRole() == 'admin';
+      return isSignedIn() && (request.auth.token.email == 'admin@edutech.vn' || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && currentUserRole() == 'admin'));
     }
 
     function isTeacherOrAdmin() {
-      return isSignedIn() && (currentUserRole() == 'teacher' || currentUserRole() == 'admin');
+      return isSignedIn() && (request.auth.token.email == 'admin@edutech.vn' || (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (currentUserRole() == 'teacher' || currentUserRole() == 'admin')));
     }
 
     function isOwner(userId) {
@@ -46,33 +46,33 @@ service cloud.firestore {
       allow write: if isTeacherOrAdmin();
     }
 
-    // Results, Mistakes, Bookmarks, Notifications: users only read/write their own (userId == request.auth.uid)
+    // Results, Mistakes, Bookmarks, Notifications: users read/write their own; admin can seed/manage
     match /results/{docId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
-      allow update: if isOwner(resource.data.userId) && isOwner(request.resource.data.userId);
-      allow delete: if isOwner(resource.data.userId);
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId) || isAdmin();
+      allow update: if (isOwner(resource.data.userId) && isOwner(request.resource.data.userId)) || isAdmin();
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
     match /mistakes/{docId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
-      allow update: if isOwner(resource.data.userId) && isOwner(request.resource.data.userId);
-      allow delete: if isOwner(resource.data.userId);
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId) || isAdmin();
+      allow update: if (isOwner(resource.data.userId) && isOwner(request.resource.data.userId)) || isAdmin();
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
     match /bookmarks/{docId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
-      allow update: if isOwner(resource.data.userId) && isOwner(request.resource.data.userId);
-      allow delete: if isOwner(resource.data.userId);
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId) || isAdmin();
+      allow update: if (isOwner(resource.data.userId) && isOwner(request.resource.data.userId)) || isAdmin();
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
     match /notifications/{docId} {
-      allow read: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
-      allow update: if isOwner(resource.data.userId) && isOwner(request.resource.data.userId);
-      allow delete: if isOwner(resource.data.userId);
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId) || isAdmin();
+      allow update: if (isOwner(resource.data.userId) && isOwner(request.resource.data.userId)) || isAdmin();
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
     }
   }
 }

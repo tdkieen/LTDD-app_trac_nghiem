@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_core/firebase_core.dart' hide FirebaseService;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/app_user.dart';
@@ -437,28 +438,48 @@ class QuizRepository {
       final Map<String, String> userIdMap = {};
 
       if (_useRemote) {
+        FirebaseApp? tempApp;
+        FirebaseAuth? tempAuth;
+        try {
+          tempApp = await Firebase.initializeApp(
+            name: 'SeedApp_${DateTime.now().millisecondsSinceEpoch}',
+            options: Firebase.app().options,
+          );
+          tempAuth = FirebaseAuth.instanceFor(app: tempApp);
+        } catch (_) {}
+
         for (final mockUser in MockData.initialUsers) {
           String uid = mockUser.id;
-          try {
-            final cred = await _firebase.createUserWithEmailAndPassword(
-              mockUser.email,
-              mockUser.password,
-            );
-            uid = cred.user?.uid ?? mockUser.id;
-          } on FirebaseAuthException catch (e) {
-            if (e.code == 'email-already-in-use') {
-              try {
-                final cred = await _firebase.signInWithEmailAndPassword(
-                  mockUser.email,
-                  mockUser.password,
-                );
-                uid = cred.user?.uid ?? mockUser.id;
-              } catch (_) {}
-            }
+          if (mockUser.email.toLowerCase() == currentAdmin.email.toLowerCase()) {
+            uid = _firebase.currentAuthUid ?? currentAdmin.id;
+          } else if (tempAuth != null) {
+            try {
+              final cred = await tempAuth.createUserWithEmailAndPassword(
+                email: mockUser.email,
+                password: mockUser.password,
+              );
+              uid = cred.user?.uid ?? mockUser.id;
+            } on FirebaseAuthException catch (e) {
+              if (e.code == 'email-already-in-use') {
+                try {
+                  final cred = await tempAuth.signInWithEmailAndPassword(
+                    email: mockUser.email,
+                    password: mockUser.password,
+                  );
+                  uid = cred.user?.uid ?? mockUser.id;
+                } catch (_) {}
+              }
+            } catch (_) {}
           }
           userIdMap[mockUser.id] = uid;
           final seededUser = mockUser.copyWith(id: uid);
           await _firebase.setUser(seededUser);
+        }
+
+        if (tempApp != null) {
+          try {
+            await tempApp.delete();
+          } catch (_) {}
         }
 
         for (final cat in MockData.initialCategories) {

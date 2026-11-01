@@ -31,6 +31,7 @@
 
 - **Framework**: Flutter SDK (`^3.13.3`)
 - **State Management**: `provider`
+- **Cơ sở dữ liệu & Xác thực**: `firebase_core`, `cloud_firestore`, `firebase_auth`, `shared_preferences`
 - **Âm thanh & Đa phương tiện**: `audioplayers`, `flutter_tts`, `file_picker`
 - **Định dạng & Tiện ích**: `intl`, `cupertino_icons`
 
@@ -128,6 +129,30 @@ flutter pub get
 
 ### 3. Tài khoản Demo tích hợp sẵn
 Trên màn hình Đăng nhập, bạn có thể nhấn chọn nhanh 1 trong 3 tài khoản mẫu:
-- **Học viên**: `duyki` (Mật khẩu: `123456`)
-- **Giáo viên**: `gv_huong` (Mật khẩu: `123456`)
-- **Quản trị viên (Admin)**: `admin` (Mật khẩu: `123456`)
+- **Học viên**: `duyki` (`duyki@edutech.vn`, Mật khẩu: `123456`)
+- **Giáo viên**: `gv_huong` (`huong.gv@edutech.vn`, Mật khẩu: `123456`)
+- **Quản trị viên (Admin)**: `admin` (`admin@edutech.vn`, Mật khẩu: `123456`)
+
+---
+
+## 🔥 Cấu Hình Firebase (Firestore + FirebaseAuth)
+
+### 1. Kết nối project với Firebase bằng FlutterFire CLI
+```bash
+dart pub global activate flutterfire_cli
+flutterfire configure
+```
+Lệnh trên sẽ sinh/cập nhật file `lib/firebase_options.dart` và `android/app/google-services.json` (Application ID Android: `vn.edutech.app_trac_nghiem`).
+
+### 2. Bật dịch vụ trên Firebase Console
+1. **Authentication**: Vào **Build -> Authentication -> Sign-in method**, bật phương thức **Email/Password**.
+2. **Cloud Firestore**: Vào **Build -> Firestore Database**, nhấn **Create database** để khởi tạo cơ sở dữ liệu cho 8 collection (`users`, `categories`, `exams`, `questions`, `results`, `mistakes`, `bookmarks`, `notifications`).
+
+### 3. Deploy quy tắc bảo mật (`firestore.rules`)
+Đảm bảo đã cài đặt `firebase-tools` và đăng nhập (`firebase login`), sau đó chạy lệnh:
+```bash
+firebase deploy --only firestore:rules
+```
+
+### 4. Khởi tạo dữ liệu mẫu (Seed Data)
+- Đăng nhập bằng tài khoản **Admin** ở chế độ Debug (`flutter run`), sau đó nhấn nút **"Tạo dữ liệu mẫu"** trên thanh Header hoặc trong trang Hồ sơ cá nhân để tự động tạo các tài khoản mẫu qua `FirebaseAuth` và đẩy dữ liệu mẫu từ `lib/services/mock_data.dart` lên `Cloud Firestore`.

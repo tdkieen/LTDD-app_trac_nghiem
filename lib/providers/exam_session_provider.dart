@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/de_thi.dart';
@@ -21,6 +22,8 @@ class ExamSessionProvider extends ChangeNotifier {
   Timer? _timer;
   int _cheatWarnings = 0;
   bool _isSubmitted = false;
+  bool _shuffleQuestions = false;
+  bool _shuffleOptions = false;
   KetQuaThi? _lastResult;
   String _currentUserId = 'guest';
   VoidCallback? onTimeUp;
@@ -36,7 +39,50 @@ class ExamSessionProvider extends ChangeNotifier {
   int get totalSeconds => _totalSeconds;
   int get cheatWarnings => _cheatWarnings;
   bool get isSubmitted => _isSubmitted;
+  bool get shuffleQuestions => _shuffleQuestions;
+  bool get shuffleOptions => _shuffleOptions;
   KetQuaThi? get lastResult => _lastResult;
+
+  void setShuffleQuestions(bool value) {
+    _shuffleQuestions = value;
+    notifyListeners();
+  }
+
+  void setShuffleOptions(bool value) {
+    _shuffleOptions = value;
+    notifyListeners();
+  }
+
+  static CauHoi shuffleQuestionOptions(CauHoi q, [Random? random]) {
+    final rng = random ?? Random();
+    const keys = ['A', 'B', 'C', 'D'];
+    final entries = <MapEntry<String, String>>[];
+    for (final k in keys) {
+      final val = q.getOption(k);
+      if (val.isNotEmpty) {
+        entries.add(MapEntry(k, val));
+      }
+    }
+    if (entries.length <= 1) return q;
+
+    entries.shuffle(rng);
+    final origCorrect = (q.dapAnDung ?? 'A').toUpperCase().trim();
+    String newCorrect = origCorrect;
+    for (int i = 0; i < entries.length; i++) {
+      if (entries[i].key == origCorrect) {
+        newCorrect = keys[i];
+        break;
+      }
+    }
+
+    return q.copyWith(
+      phuongAnA: entries.isNotEmpty ? entries[0].value : q.phuongAnA,
+      phuongAnB: entries.length > 1 ? entries[1].value : q.phuongAnB,
+      phuongAnC: entries.length > 2 ? entries[2].value : q.phuongAnC,
+      phuongAnD: entries.length > 3 ? entries[3].value : q.phuongAnD,
+      dapAnDung: newCorrect,
+    );
+  }
 
   void setCurrentUser(String userId) {
     _currentUserId = userId;
@@ -170,6 +216,8 @@ class ExamSessionProvider extends ChangeNotifier {
     String? userId,
     VoidCallback? onTimeUp,
     int? customDurationSeconds,
+    bool? shuffleQuestions,
+    bool? shuffleOptions,
   }) {
     _timer?.cancel();
     _currentExam = exam;
@@ -183,9 +231,18 @@ class ExamSessionProvider extends ChangeNotifier {
     autoSubmitNotifier.value = null;
     if (userId != null) _currentUserId = userId;
     if (onTimeUp != null) this.onTimeUp = onTimeUp;
+    if (shuffleQuestions != null) _shuffleQuestions = shuffleQuestions;
+    if (shuffleOptions != null) _shuffleOptions = shuffleOptions;
 
-    final qList = _repo.getQuestionsByExam(exam.maDeThi);
-    _questions = List.from(qList);
+    var qList = List<CauHoi>.from(_repo.getQuestionsByExam(exam.maDeThi));
+    final rng = Random();
+    if (_shuffleQuestions) {
+      qList.shuffle(rng);
+    }
+    if (_shuffleOptions) {
+      qList = qList.map((q) => shuffleQuestionOptions(q, rng)).toList();
+    }
+    _questions = qList;
 
     _totalSeconds = customDurationSeconds ?? (exam.thoiGian ?? 15) * 60;
     _secondsRemaining = _totalSeconds;

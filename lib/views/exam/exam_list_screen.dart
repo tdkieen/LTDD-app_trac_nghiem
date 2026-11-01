@@ -4,6 +4,7 @@ import '../../core/responsive/responsive_layout.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/de_thi.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/exam_session_provider.dart';
 import '../../providers/quiz_provider.dart';
 import '../widgets/exam_card.dart';
 
@@ -21,6 +22,7 @@ class ExamListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final quiz = context.watch<QuizProvider>();
+    final session = context.watch<ExamSessionProvider>();
     final user = auth.currentUser;
     final isMobile = ResponsiveLayout.isMobile(context);
 
@@ -305,6 +307,39 @@ class ExamListScreen extends StatelessWidget {
                         ],
                       ),
                     ],
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          const Text(
+                            'Tùy chọn thi: ',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          FilterChip(
+                            label: const Text('Xáo trộn câu hỏi', style: TextStyle(fontSize: 12)),
+                            selected: session.shuffleQuestions,
+                            selectedColor: AppColors.primarySoft,
+                            checkmarkColor: AppColors.primary,
+                            onSelected: (val) => session.setShuffleQuestions(val),
+                          ),
+                          FilterChip(
+                            label: const Text('Xáo trộn đáp án', style: TextStyle(fontSize: 12)),
+                            selected: session.shuffleOptions,
+                            selectedColor: AppColors.primarySoft,
+                            checkmarkColor: AppColors.primary,
+                            onSelected: (val) => session.setShuffleOptions(val),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),

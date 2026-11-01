@@ -5,9 +5,10 @@ import '../../core/responsive/responsive_layout.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
+import '../../services/quiz_repository.dart';
 import 'notification_dialog.dart';
 
-class AppHeader extends StatelessWidget implements PreferredSizeWidget {
+class AppHeader extends StatefulWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback? onMenuPressed;
   final List<Widget>? actions;
@@ -21,6 +22,34 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => const Size.fromHeight(68);
+
+  @override
+  State<AppHeader> createState() => _AppHeaderState();
+}
+
+class _AppHeaderState extends State<AppHeader> {
+  bool? _isFirebaseOnline;
+  bool _checkingConnection = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _verifyConnection();
+  }
+
+  Future<void> _verifyConnection() async {
+    if (_checkingConnection || !mounted) return;
+    setState(() => _checkingConnection = true);
+    final ok = await QuizRepository().checkFirebaseConnection(
+      timeout: const Duration(seconds: 5),
+    );
+    if (mounted) {
+      setState(() {
+        _isFirebaseOnline = ok;
+        _checkingConnection = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +72,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           if (isMobile) ...[
             IconButton(
               icon: const Icon(Icons.menu, color: AppColors.textPrimary),
-              onPressed: onMenuPressed ?? () => Scaffold.of(context).openDrawer(),
+              onPressed: widget.onMenuPressed ?? () => Scaffold.of(context).openDrawer(),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             ),
@@ -53,7 +82,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           // Title
           Expanded(
             child: Text(
-              title,
+              widget.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -65,7 +94,56 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
 
           // Custom actions
-          ...?actions,
+          ...?widget.actions,
+
+          // Real Firebase Connection Status Badge (5s timeout doc read)
+          Tooltip(
+            message: _checkingConnection
+                ? 'Đang kiểm tra kết nối Firebase (timeout 5s)...'
+                : (_isFirebaseOnline == true
+                    ? 'Đã kết nối Firebase Firestore (Nhấn để kiểm tra lại)'
+                    : 'Mất kết nối Firebase / Chế độ Offline (Nhấn để kiểm tra lại)'),
+            child: InkWell(
+              onTap: _verifyConnection,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: _isFirebaseOnline == true ? AppColors.successSoft : AppColors.warningSoft,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: _isFirebaseOnline == true ? AppColors.success : AppColors.warning,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _checkingConnection
+                          ? Icons.sync
+                          : (_isFirebaseOnline == true ? Icons.cloud_done_outlined : Icons.cloud_off_outlined),
+                      size: 14,
+                      color: _isFirebaseOnline == true ? AppColors.success : AppColors.warning,
+                    ),
+                    if (!isMobile) ...[
+                      const SizedBox(width: 5),
+                      Text(
+                        _checkingConnection
+                            ? 'Checking...'
+                            : (_isFirebaseOnline == true ? 'Online' : 'Offline'),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _isFirebaseOnline == true ? AppColors.success : AppColors.warning,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
 
           // Debug Admin Seed Sample Data button
           if (kDebugMode && user != null && user.isAdmin) ...[

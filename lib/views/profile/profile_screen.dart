@@ -7,6 +7,7 @@ import '../../core/responsive/responsive_layout.dart';
 import '../../core/theme/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/quiz_provider.dart';
+import '../../services/quiz_repository.dart';
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback onGoHome;
@@ -23,6 +24,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _phoneCtrl;
   late TextEditingController _targetCtrl;
   bool _isEditing = false;
+  bool? _isFirebaseConnected;
+  bool _checkingFirebase = false;
 
   @override
   void initState() {
@@ -34,6 +37,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _targetCtrl = TextEditingController(
       text: (user?.diemMucTieu ?? 8.0).toString(),
     );
+    _checkFirebaseStatus();
+  }
+
+  Future<void> _checkFirebaseStatus() async {
+    if (_checkingFirebase || !mounted) return;
+    setState(() => _checkingFirebase = true);
+    final ok = await QuizRepository().checkFirebaseConnection(
+      timeout: const Duration(seconds: 5),
+    );
+    if (mounted) {
+      setState(() {
+        _isFirebaseConnected = ok;
+        _checkingFirebase = false;
+      });
+    }
   }
 
   @override
@@ -228,23 +246,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              user.role.displayName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 11,
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  user.role.displayName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11,
+                                  ),
+                                ),
                               ),
-                            ),
+                              InkWell(
+                                onTap: _checkFirebaseStatus,
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _isFirebaseConnected == true
+                                        ? AppColors.success.withValues(alpha: 0.28)
+                                        : Colors.white.withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _checkingFirebase
+                                            ? Icons.sync
+                                            : (_isFirebaseConnected == true
+                                                ? Icons.cloud_done
+                                                : Icons.cloud_off),
+                                        size: 12,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        _checkingFirebase
+                                            ? 'Firebase: Đang kiểm tra...'
+                                            : (_isFirebaseConnected == true
+                                                ? 'Firebase: Online'
+                                                : 'Firebase: Offline'),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           Text(

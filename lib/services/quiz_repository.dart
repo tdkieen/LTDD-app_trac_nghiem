@@ -119,6 +119,11 @@ class QuizRepository {
   Stream<List<CauHoi>> watchQuestions() => _firebase.watchQuestions();
   Stream<List<ThongBao>> watchNotifications() => _firebase.watchNotifications();
 
+  Future<bool> checkFirebaseConnection({Duration timeout = const Duration(seconds: 5)}) async {
+    if (!_useRemote) return false;
+    return _firebase.checkConnection(timeout: timeout);
+  }
+
   void startRealtimeListeners() {
     if (!_useRemote) return;
     _examsSub ??= _firebase.watchExams().listen(

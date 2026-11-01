@@ -14,10 +14,30 @@ class QuizProvider extends ChangeNotifier {
   String _selectedDifficulty = 'Tất cả';
   int? _selectedCategoryId;
   String _searchQuery = '';
+  bool _isLoading = false;
+  String? _errorMessage;
 
   String get selectedDifficulty => _selectedDifficulty;
   int? get selectedCategoryId => _selectedCategoryId;
   String get searchQuery => _searchQuery;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage ?? _repo.lastError;
+
+  void clearError() {
+    _errorMessage = null;
+    _repo.lastError = null;
+    notifyListeners();
+  }
+
+  Future<void> syncData() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    await _repo.syncFromFirestore();
+    _errorMessage = _repo.lastError;
+    _isLoading = false;
+    notifyListeners();
+  }
 
   // Filters
   void setDifficulty(String diff) {
@@ -61,22 +81,26 @@ class QuizProvider extends ChangeNotifier {
 
   bool isBookmarked(String userId, int maDeThi) => _repo.isBookmarked(userId, maDeThi);
 
-  void toggleBookmark(String userId, int maDeThi) {
-    _repo.toggleBookmark(userId, maDeThi);
+  Future<bool> toggleBookmark(String userId, int maDeThi) async {
+    final res = await _repo.toggleBookmark(userId, maDeThi);
+    _errorMessage = _repo.lastError;
     notifyListeners();
+    return res;
   }
 
   List<CauHoiSai> getMistakes(String userId) => _repo.getMistakesByUser(userId);
 
-  void deleteMistake(int id) {
-    _repo.deleteMistake(id);
+  Future<void> deleteMistake(int id) async {
+    await _repo.deleteMistake(id);
+    _errorMessage = _repo.lastError;
     notifyListeners();
   }
 
   List<KetQuaThi> getUserHistory(String userId) => _repo.getResultsByUser(userId);
 
-  void deleteHistory(int id) {
-    _repo.deleteResult(id);
+  Future<void> deleteHistory(int id) async {
+    await _repo.deleteResult(id);
+    _errorMessage = _repo.lastError;
     notifyListeners();
   }
 
@@ -87,35 +111,47 @@ class QuizProvider extends ChangeNotifier {
   List<AppUser> getUsers() => _repo.getUsers();
 
   // Admin / Teacher operations
-  DeThi addExam({
+  Future<DeThi> addExam({
     required String tenDeThi,
     required int maChuDe,
     required String mucDoKho,
     required int thoiGian,
     int soCauHoi = 10,
-  }) {
-    final created = _repo.addExam(
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    final created = await _repo.addExam(
       tenDeThi: tenDeThi,
       maChuDe: maChuDe,
       mucDoKho: mucDoKho,
       thoiGian: thoiGian,
       soCauHoi: soCauHoi,
     );
+    _errorMessage = _repo.lastError;
+    _isLoading = false;
     notifyListeners();
     return created;
   }
 
-  void updateExam(DeThi exam) {
-    _repo.updateExam(exam);
+  Future<void> updateExam(DeThi exam) async {
+    _isLoading = true;
+    notifyListeners();
+    await _repo.updateExam(exam);
+    _errorMessage = _repo.lastError;
+    _isLoading = false;
     notifyListeners();
   }
 
-  void deleteExam(int id) {
-    _repo.deleteExam(id);
+  Future<void> deleteExam(int id) async {
+    _isLoading = true;
+    notifyListeners();
+    await _repo.deleteExam(id);
+    _errorMessage = _repo.lastError;
+    _isLoading = false;
     notifyListeners();
   }
 
-  void addQuestion({
+  Future<void> addQuestion({
     required int maDeThi,
     required int maChuDe,
     required String noiDung,
@@ -129,8 +165,10 @@ class QuizProvider extends ChangeNotifier {
     String? audioPath,
     String? imagePath,
     String? giaiThich,
-  }) {
-    _repo.addQuestion(
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    await _repo.addQuestion(
       maDeThi: maDeThi,
       maChuDe: maChuDe,
       noiDung: noiDung,
@@ -145,38 +183,45 @@ class QuizProvider extends ChangeNotifier {
       imagePath: imagePath,
       giaiThich: giaiThich,
     );
+    _errorMessage = _repo.lastError;
+    _isLoading = false;
     notifyListeners();
   }
 
-  void deleteQuestion(int id) {
-    _repo.deleteQuestion(id);
+  Future<void> deleteQuestion(int id) async {
+    await _repo.deleteQuestion(id);
+    _errorMessage = _repo.lastError;
     notifyListeners();
   }
 
-  bool addCategory(String name) {
-    final success = _repo.addCategory(name);
+  Future<bool> addCategory(String name) async {
+    final success = await _repo.addCategory(name);
+    _errorMessage = _repo.lastError;
     if (success) notifyListeners();
     return success;
   }
 
-  bool deleteCategory(int id) {
-    final success = _repo.deleteCategory(id);
+  Future<bool> deleteCategory(int id) async {
+    final success = await _repo.deleteCategory(id);
+    _errorMessage = _repo.lastError;
     if (success) notifyListeners();
     return success;
   }
 
-  bool changeUserRole(String userId, UserRole newRole, {AppUser? caller}) {
+  Future<bool> changeUserRole(String userId, UserRole newRole, {AppUser? caller}) async {
     final actor = caller ?? _repo.activeUser;
     if (actor == null || !actor.isAdmin) {
       return false;
     }
-    final ok = _repo.changeUserRole(userId, newRole, caller: actor);
+    final ok = await _repo.changeUserRole(userId, newRole, caller: actor);
+    _errorMessage = _repo.lastError;
     if (ok) notifyListeners();
     return ok;
   }
 
-  void deleteUser(String userId) {
-    _repo.deleteUser(userId);
+  Future<void> deleteUser(String userId) async {
+    await _repo.deleteUser(userId);
+    _errorMessage = _repo.lastError;
     notifyListeners();
   }
 }

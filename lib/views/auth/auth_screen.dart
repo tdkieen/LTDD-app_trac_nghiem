@@ -76,7 +76,7 @@ class _AuthScreenState extends State<AuthScreen> {
     auth.login(username, password);
   }
 
-  void _handleRegister() {
+  Future<void> _handleRegister() async {
     if (!_regFormKey.currentState!.validate()) return;
     if (_regPassCtrl.text != _regConfirmPassCtrl.text) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -89,7 +89,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
 
     final auth = context.read<AuthProvider>();
-    final ok = auth.register(
+    final ok = await auth.register(
       userName: _regUserCtrl.text,
       email: _regEmailCtrl.text,
       password: _regPassCtrl.text,

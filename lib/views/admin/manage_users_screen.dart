@@ -270,11 +270,12 @@ class ManageUsersScreen extends StatelessWidget {
               child: Text(role.displayName),
             );
           }).toList(),
-          onChanged: (newRole) {
+          onChanged: (newRole) async {
             if (newRole != null && newRole != user.role) {
               final auth = context.read<AuthProvider>();
+              final messenger = ScaffoldMessenger.of(context);
               if (!auth.isAdmin) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(
                     content: Text('Chỉ Admin mới có quyền thay đổi vai trò người dùng.'),
                     backgroundColor: AppColors.danger,
@@ -282,13 +283,13 @@ class ManageUsersScreen extends StatelessWidget {
                 );
                 return;
               }
-              final ok = context.read<QuizProvider>().changeUserRole(
+              final ok = await context.read<QuizProvider>().changeUserRole(
                 user.id,
                 newRole,
                 caller: auth.currentUser,
               );
               if (ok) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   SnackBar(
                     content: Text(
                       'Đã đổi vai trò của "${user.fullName}" thành ${newRole.displayName}.',

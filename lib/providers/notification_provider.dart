@@ -13,22 +13,22 @@ class NotificationProvider extends ChangeNotifier {
     return _repo.getUnreadNotificationCount(userId);
   }
 
-  void markAsRead(int id) {
-    _repo.markAsRead(id);
+  Future<void> markAsRead(int id) async {
+    await _repo.markAsRead(id);
     notifyListeners();
   }
 
-  void markAllAsRead(String? userId) {
-    _repo.markAllAsRead(userId);
+  Future<void> markAllAsRead(String? userId) async {
+    await _repo.markAllAsRead(userId);
     notifyListeners();
   }
 
-  void sendNotification({
+  Future<void> sendNotification({
     required String noiDung,
     String? userId,
     String loaiIcon = 'info',
-  }) {
-    _repo.sendNotification(
+  }) async {
+    await _repo.sendNotification(
       noiDung: noiDung,
       userId: userId,
       loaiIcon: loaiIcon,

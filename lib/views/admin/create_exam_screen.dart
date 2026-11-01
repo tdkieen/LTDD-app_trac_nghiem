@@ -53,7 +53,7 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
   }
 
   /// Hàm lưu đề thi (Thêm mới hoặc Cập nhật)
-  void _saveExam() {
+  Future<void> _saveExam() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -75,20 +75,33 @@ class _CreateExamScreenState extends State<CreateExamScreen> {
         thoiGian: duration,
         soCauHoi: qCount,
       );
-      quiz.updateExam(updated);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cập nhật đề thi thành công!')),
-      );
+      await quiz.updateExam(updated);
+      if (!mounted) return;
+      if (quiz.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(quiz.errorMessage!), backgroundColor: AppColors.danger),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật đề thi thành công!')),
+        );
+      }
       widget.onSaved();
     } else {
       // 2. Chế độ Tạo đề mới
-      final created = quiz.addExam(
+      final created = await quiz.addExam(
         tenDeThi: _titleController.text.trim(),
         maChuDe: _selectedCategory!,
         mucDoKho: _selectedDifficulty,
         thoiGian: duration,
         soCauHoi: qCount,
       );
+      if (!mounted) return;
+      if (quiz.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(quiz.errorMessage!), backgroundColor: AppColors.danger),
+        );
+      }
 
       // Mở hộp thoại hỏi có muốn thêm câu hỏi ngay không
       showDialog(

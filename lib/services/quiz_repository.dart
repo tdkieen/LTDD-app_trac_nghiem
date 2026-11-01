@@ -6,6 +6,7 @@ import '../models/ket_qua_thi.dart';
 import '../models/cau_hoi_sai.dart';
 import '../models/de_thi_yeu_thich.dart';
 import '../models/thong_bao.dart';
+import 'firebase_service.dart';
 import 'mock_data.dart';
 
 class OverallLeaderboardItem {
@@ -44,8 +45,12 @@ class QuizRepository {
   static final QuizRepository _instance = QuizRepository._internal();
   factory QuizRepository() => _instance;
   QuizRepository._internal() {
-    _init();
+    _initMockCache();
   }
+
+  final FirebaseService _firebase = FirebaseService();
+  bool useMockOnly = false;
+  String? lastError;
 
   final List<AppUser> _users = [];
   final List<ChuDe> _categories = [];
@@ -57,20 +62,114 @@ class QuizRepository {
   final List<ThongBao> _notifications = [];
   AppUser? _activeUser;
 
+  bool get _useRemote => !useMockOnly && _firebase.isAvailable;
+
   AppUser? get activeUser => _activeUser;
   void setActiveUser(AppUser? user) {
     _activeUser = user;
   }
 
-  void _init() {
-    _users.addAll(MockData.initialUsers);
-    _categories.addAll(MockData.initialCategories);
-    _exams.addAll(MockData.initialExams);
-    _questions.addAll(MockData.initialQuestions);
-    _results.addAll(MockData.initialResults);
-    _mistakes.addAll(MockData.initialMistakes);
-    _bookmarks.addAll(MockData.initialBookmarks);
-    _notifications.addAll(MockData.initialNotifications);
+  void _initMockCache() {
+    _users
+      ..clear()
+      ..addAll(MockData.initialUsers);
+    _categories
+      ..clear()
+      ..addAll(MockData.initialCategories);
+    _exams
+      ..clear()
+      ..addAll(MockData.initialExams);
+    _questions
+      ..clear()
+      ..addAll(MockData.initialQuestions);
+    _results
+      ..clear()
+      ..addAll(MockData.initialResults);
+    _mistakes
+      ..clear()
+      ..addAll(MockData.initialMistakes);
+    _bookmarks
+      ..clear()
+      ..addAll(MockData.initialBookmarks);
+    _notifications
+      ..clear()
+      ..addAll(MockData.initialNotifications);
+    _activeUser = null;
+    lastError = null;
+  }
+
+  void resetForTesting({bool mockOnly = true}) {
+    useMockOnly = mockOnly;
+    _initMockCache();
+  }
+
+  Future<void> syncFromFirestore() async {
+    if (!_useRemote) return;
+    try {
+      lastError = null;
+      final results = await Future.wait([
+        _firebase.getUsers(),
+        _firebase.getCategories(),
+        _firebase.getExams(),
+        _firebase.getQuestions(),
+        _firebase.getResults(),
+        _firebase.getMistakes(),
+        _firebase.getBookmarks(),
+        _firebase.getNotifications(),
+      ]);
+
+      final users = results[0] as List<AppUser>;
+      final categories = results[1] as List<ChuDe>;
+      final exams = results[2] as List<DeThi>;
+      final questions = results[3] as List<CauHoi>;
+      final examResults = results[4] as List<KetQuaThi>;
+      final mistakes = results[5] as List<CauHoiSai>;
+      final bookmarks = results[6] as List<DeThiYeuThich>;
+      final notifications = results[7] as List<ThongBao>;
+
+      if (users.isNotEmpty) {
+        _users
+          ..clear()
+          ..addAll(users);
+      }
+      if (categories.isNotEmpty) {
+        _categories
+          ..clear()
+          ..addAll(categories);
+      }
+      if (exams.isNotEmpty) {
+        _exams
+          ..clear()
+          ..addAll(exams);
+      }
+      if (questions.isNotEmpty) {
+        _questions
+          ..clear()
+          ..addAll(questions);
+      }
+      if (examResults.isNotEmpty || exams.isNotEmpty) {
+        _results
+          ..clear()
+          ..addAll(examResults);
+      }
+      if (mistakes.isNotEmpty || exams.isNotEmpty) {
+        _mistakes
+          ..clear()
+          ..addAll(mistakes);
+      }
+      if (bookmarks.isNotEmpty || exams.isNotEmpty) {
+        _bookmarks
+          ..clear()
+          ..addAll(bookmarks);
+      }
+      if (notifications.isNotEmpty) {
+        _notifications
+          ..clear()
+          ..addAll(notifications);
+      }
+    } catch (e) {
+      lastError = 'Không thể đồng bộ dữ liệu từ máy chủ: $e';
+    }
   }
 
   // ================= USERS =================
@@ -94,12 +193,21 @@ class QuizRepository {
     return _users.any((u) => u.email.toLowerCase() == query);
   }
 
-  bool addUser(AppUser user) {
+  Future<bool> addUser(AppUser user) async {
     if (isUsernameTaken(user.userName) || isEmailTaken(user.email)) {
       return false;
     }
-    _users.add(user);
-    return true;
+    try {
+      lastError = null;
+      if (_useRemote) {
+        await _firebase.setUser(user);
+      }
+      _users.add(user);
+      return true;
+    } catch (e) {
+      lastError = 'Lỗi kết nối mạng khi thêm người dùng: $e';
+      return false;
+    }
   }
 
   AppUser? authenticate(String usernameOrEmail, String password) {
@@ -118,32 +226,60 @@ class QuizRepository {
     }
   }
 
-  bool updateUser(AppUser user) {
+  Future<bool> updateUser(AppUser user) async {
     final idx = _users.indexWhere((u) => u.id == user.id);
-    if (idx != -1) {
-      _users[idx] = user;
+    try {
+      lastError = null;
+      if (_useRemote) {
+        await _firebase.updateUser(user);
+      }
+      if (idx != -1) {
+        _users[idx] = user;
+      } else {
+        _users.add(user);
+      }
       return true;
+    } catch (e) {
+      lastError = 'Lỗi kết nối mạng khi cập nhật hồ sơ: $e';
+      return false;
     }
-    return false;
   }
 
-  bool changeUserRole(String userId, UserRole newRole, {AppUser? caller}) {
+  Future<bool> changeUserRole(String userId, UserRole newRole, {AppUser? caller}) async {
     final actor = caller ?? _activeUser;
     if (actor == null || !actor.isAdmin) {
       return false;
     }
     final idx = _users.indexWhere((u) => u.id == userId);
     if (idx != -1) {
-      _users[idx] = _users[idx].copyWith(role: newRole);
-      return true;
+      try {
+        lastError = null;
+        if (_useRemote) {
+          await _firebase.updateUserRole(userId, newRole);
+        }
+        _users[idx] = _users[idx].copyWith(role: newRole);
+        return true;
+      } catch (e) {
+        lastError = 'Lỗi kết nối mạng khi đổi vai trò: $e';
+        return false;
+      }
     }
     return false;
   }
 
-  bool deleteUser(String userId) {
-    final countBefore = _users.length;
-    _users.removeWhere((u) => u.id == userId);
-    return _users.length < countBefore;
+  Future<bool> deleteUser(String userId) async {
+    try {
+      lastError = null;
+      if (_useRemote) {
+        await _firebase.deleteUser(userId);
+      }
+      final countBefore = _users.length;
+      _users.removeWhere((u) => u.id == userId);
+      return _users.length < countBefore;
+    } catch (e) {
+      lastError = 'Lỗi kết nối mạng khi xóa người dùng: $e';
+      return false;
+    }
   }
 
   // ================= CATEGORIES =================
@@ -157,7 +293,7 @@ class QuizRepository {
     }
   }
 
-  bool addCategory(String name) {
+  Future<bool> addCategory(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return false;
     final exists = _categories.any((c) => c.tenChuDe.toLowerCase() == trimmed.toLowerCase());
@@ -166,18 +302,36 @@ class QuizRepository {
     final nextId = _categories.isEmpty
         ? 1
         : _categories.map((c) => c.maChuDe).reduce((a, b) => a > b ? a : b) + 1;
-    _categories.add(ChuDe(maChuDe: nextId, tenChuDe: trimmed));
-    return true;
+    final newCat = ChuDe(maChuDe: nextId, tenChuDe: trimmed);
+    try {
+      lastError = null;
+      if (_useRemote) {
+        await _firebase.setCategory(newCat);
+      }
+      _categories.add(newCat);
+      return true;
+    } catch (e) {
+      lastError = 'Lỗi kết nối mạng khi thêm chủ đề: $e';
+      return false;
+    }
   }
 
-  bool deleteCategory(int id) {
-    // Check if category is used
+  Future<bool> deleteCategory(int id) async {
     final isUsedByExam = _exams.any((e) => e.maChuDe == id);
     final isUsedByQuestion = _questions.any((q) => q.maChuDe == id);
     if (isUsedByExam || isUsedByQuestion) return false;
 
-    _categories.removeWhere((c) => c.maChuDe == id);
-    return true;
+    try {
+      lastError = null;
+      if (_useRemote) {
+        await _firebase.deleteCategory(id);
+      }
+      _categories.removeWhere((c) => c.maChuDe == id);
+      return true;
+    } catch (e) {
+      lastError = 'Lỗi kết nối mạng khi xóa chủ đề: $e';
+      return false;
+    }
   }
 
   // ================= EXAMS =================
@@ -218,13 +372,13 @@ class QuizRepository {
     }
   }
 
-  DeThi addExam({
+  Future<DeThi> addExam({
     required String tenDeThi,
     required int maChuDe,
     required String mucDoKho,
     required int thoiGian,
     int soCauHoi = 10,
-  }) {
+  }) async {
     final nextId = _exams.isEmpty
         ? 101
         : _exams.map((e) => e.maDeThi).reduce((a, b) => a > b ? a : b) + 1;
@@ -240,24 +394,52 @@ class QuizRepository {
       ngayTao: DateTime.now(),
       chuDe: getCategoryById(maChuDe),
     );
-    _exams.add(newExam);
+    try {
+      lastError = null;
+      if (_useRemote) {
+        await _firebase.setExam(newExam);
+      }
+      _exams.add(newExam);
+    } catch (e) {
+      lastError = 'Lỗi kết nối mạng khi tạo đề thi: $e';
+      _exams.add(newExam);
+    }
     return newExam;
   }
 
-  bool updateExam(DeThi exam) {
+  Future<bool> updateExam(DeThi exam) async {
     final idx = _exams.indexWhere((e) => e.maDeThi == exam.maDeThi);
     if (idx != -1) {
-      _exams[idx] = exam.copyWith(chuDe: getCategoryById(exam.maChuDe));
-      return true;
+      try {
+        lastError = null;
+        if (_useRemote) {
+          await _firebase.updateExam(exam);
+        }
+        _exams[idx] = exam.copyWith(chuDe: getCategoryById(exam.maChuDe));
+        return true;
+      } catch (e) {
+        lastError = 'Lỗi kết nối mạng khi cập nhật đề thi: $e';
+        return false;
+      }
     }
     return false;
   }
 
-  bool deleteExam(int id) {
-    _questions.removeWhere((q) => q.maDeThi == id);
-    _bookmarks.removeWhere((b) => b.maDeThi == id);
-    _exams.removeWhere((e) => e.maDeThi == id);
-    return true;
+  Future<bool> deleteExam(int id) async {
+    try {
+      lastError = null;
+      if (_useRemote) {
+        await _firebase.deleteQuestionsByExam(id);
+        await _firebase.deleteExam(id);
+      }
+      _questions.removeWhere((q) => q.maDeThi == id);
+      _bookmarks.removeWhere((b) => b.maDeThi == id);
+      _exams.removeWhere((e) => e.maDeThi == id);
+      return true;
+    } catch (e) {
+      lastError = 'Lỗi kết nối mạng khi xóa đề thi: $e';
+      return false;
+    }
   }
 
   // ================= QUESTIONS =================
@@ -273,7 +455,7 @@ class QuizRepository {
     }
   }
 
-  CauHoi addQuestion({
+  Future<CauHoi> addQuestion({
     required int maDeThi,
     required int maChuDe,
     required String noiDung,
@@ -287,7 +469,7 @@ class QuizRepository {
     String? audioPath,
     String? imagePath,
     String? giaiThich,
-  }) {
+  }) async {
     final nextId = _questions.isEmpty
         ? 1
         : _questions.map((q) => q.maCauHoi).reduce((a, b) => a > b ? a : b) + 1;
@@ -308,37 +490,60 @@ class QuizRepository {
       imagePath: imagePath,
       giaiThich: giaiThich,
     );
-    _questions.add(question);
+    try {
+      lastError = null;
+      if (_useRemote) {
+        await _firebase.setQuestion(question);
+      }
+      _questions.add(question);
 
-    // Update count in exam
-    final examIdx = _exams.indexWhere((e) => e.maDeThi == maDeThi);
-    if (examIdx != -1) {
-      final count = _questions.where((q) => q.maDeThi == maDeThi).length;
-      _exams[examIdx] = _exams[examIdx].copyWith(soCauHoi: count);
+      final examIdx = _exams.indexWhere((e) => e.maDeThi == maDeThi);
+      if (examIdx != -1) {
+        final count = _questions.where((q) => q.maDeThi == maDeThi).length;
+        _exams[examIdx] = _exams[examIdx].copyWith(soCauHoi: count);
+        if (_useRemote) {
+          await _firebase.updateExam(_exams[examIdx]);
+        }
+      }
+    } catch (e) {
+      lastError = 'Lỗi kết nối mạng khi thêm câu hỏi: $e';
+      _questions.add(question);
     }
 
     return question;
   }
 
-  bool deleteQuestion(int id) {
+  Future<bool> deleteQuestion(int id) async {
     final q = getQuestionById(id);
     if (q != null) {
-      _questions.removeWhere((item) => item.maCauHoi == id);
-      _mistakes.removeWhere((m) => m.maCauHoi == id);
-      if (q.maDeThi != null) {
-        final examIdx = _exams.indexWhere((e) => e.maDeThi == q.maDeThi);
-        if (examIdx != -1) {
-          final count = _questions.where((item) => item.maDeThi == q.maDeThi).length;
-          _exams[examIdx] = _exams[examIdx].copyWith(soCauHoi: count);
+      try {
+        lastError = null;
+        if (_useRemote) {
+          await _firebase.deleteQuestion(id);
         }
+        _questions.removeWhere((item) => item.maCauHoi == id);
+        _mistakes.removeWhere((m) => m.maCauHoi == id);
+        if (q.maDeThi != null) {
+          final examIdx = _exams.indexWhere((e) => e.maDeThi == q.maDeThi);
+          if (examIdx != -1) {
+            final count = _questions.where((item) => item.maDeThi == q.maDeThi).length;
+            _exams[examIdx] = _exams[examIdx].copyWith(soCauHoi: count);
+            if (_useRemote) {
+              await _firebase.updateExam(_exams[examIdx]);
+            }
+          }
+        }
+        return true;
+      } catch (e) {
+        lastError = 'Lỗi kết nối mạng khi xóa câu hỏi: $e';
+        return false;
       }
-      return true;
     }
     return false;
   }
 
   // ================= EXAM TAKING & RESULTS =================
-  KetQuaThi submitExam({
+  Future<KetQuaThi> submitExam({
     required String userId,
     required int maDeThi,
     required Map<int, String> answers, // maCauHoi -> 'A' | 'B' | 'C' | 'D'
@@ -347,7 +552,7 @@ class QuizRepository {
     bool isPractice = false,
     bool isMistakePractice = false,
     int soLanViPham = 0,
-  }) {
+  }) async {
     final exam = getExamById(maDeThi);
     final examQuestions = questions ?? getQuestionsByExam(maDeThi);
     int correctCount = 0;
@@ -359,11 +564,10 @@ class QuizRepository {
       if (isCorrect) {
         correctCount++;
         if (isMistakePractice || maDeThi == 9999) {
-          resolveMistake(userId: userId, maCauHoi: q.maCauHoi);
+          await resolveMistake(userId: userId, maCauHoi: q.maCauHoi);
         }
       } else if (!isPractice) {
-        // Record into Mistake Notebook only when not in practice mode
-        recordMistake(userId: userId, maCauHoi: q.maCauHoi, dapAnDaChon: chosen);
+        await recordMistake(userId: userId, maCauHoi: q.maCauHoi, dapAnDaChon: chosen);
       }
 
       details.add(ChiTietKetQua(
@@ -405,12 +609,24 @@ class QuizRepository {
     );
 
     if (!isPractice) {
+      try {
+        lastError = null;
+        if (_useRemote) {
+          await _firebase.setResult(result);
+        }
+      } catch (e) {
+        lastError = 'Lỗi kết nối mạng khi lưu kết quả thi: $e';
+      }
       _results.insert(0, result);
 
-      // Increase exam take count
       final examIdx = _exams.indexWhere((e) => e.maDeThi == maDeThi);
       if (examIdx != -1) {
         _exams[examIdx] = _exams[examIdx].copyWith(luotThi: _exams[examIdx].luotThi + 1);
+        if (_useRemote) {
+          try {
+            await _firebase.updateExam(_exams[examIdx]);
+          } catch (_) {}
+        }
       }
     }
 
@@ -458,10 +674,19 @@ class QuizRepository {
     }
   }
 
-  bool deleteResult(int id) {
-    final before = _results.length;
-    _results.removeWhere((r) => r.maKetQua == id);
-    return _results.length < before;
+  Future<bool> deleteResult(int id) async {
+    try {
+      lastError = null;
+      if (_useRemote) {
+        await _firebase.deleteResult(id);
+      }
+      final before = _results.length;
+      _results.removeWhere((r) => r.maKetQua == id);
+      return _results.length < before;
+    } catch (e) {
+      lastError = 'Lỗi kết nối mạng khi xóa kết quả: $e';
+      return false;
+    }
   }
 
   List<ExamLeaderboardItem> getLeaderboardByExam(int maDeThi) {
@@ -535,22 +760,40 @@ class QuizRepository {
     return _bookmarks.any((b) => b.userId == userId && b.maDeThi == maDeThi);
   }
 
-  bool toggleBookmark(String userId, int maDeThi) {
+  Future<bool> toggleBookmark(String userId, int maDeThi) async {
     final idx = _bookmarks.indexWhere((b) => b.userId == userId && b.maDeThi == maDeThi);
     if (idx != -1) {
+      final removed = _bookmarks[idx];
+      try {
+        lastError = null;
+        if (_useRemote) {
+          await _firebase.deleteBookmark(removed.id);
+        }
+      } catch (e) {
+        lastError = 'Lỗi kết nối mạng khi bỏ lưu đề thi: $e';
+      }
       _bookmarks.removeAt(idx);
-      return false; // Removed
+      return false;
     } else {
       final nextId = _bookmarks.isEmpty
           ? 1
           : _bookmarks.map((b) => b.id).reduce((a, b) => a > b ? a : b) + 1;
-      _bookmarks.add(DeThiYeuThich(
+      final added = DeThiYeuThich(
         id: nextId,
         userId: userId,
         maDeThi: maDeThi,
         deThi: getExamById(maDeThi),
-      ));
-      return true; // Added
+      );
+      try {
+        lastError = null;
+        if (_useRemote) {
+          await _firebase.setBookmark(added);
+        }
+      } catch (e) {
+        lastError = 'Lỗi kết nối mạng khi lưu đề thi: $e';
+      }
+      _bookmarks.add(added);
+      return true;
     }
   }
 
@@ -570,54 +813,86 @@ class QuizRepository {
     }).toList();
   }
 
-  void recordMistake({
+  Future<void> recordMistake({
     required String userId,
     required int maCauHoi,
     String? dapAnDaChon,
-  }) {
+  }) async {
     final idx = _mistakes.indexWhere((m) => m.userId == userId && m.maCauHoi == maCauHoi);
     if (idx != -1) {
       final existing = _mistakes[idx];
-      _mistakes[idx] = existing.copyWith(
+      final updated = existing.copyWith(
         lanSai: existing.lanSai + 1,
         lanCuoiSai: DateTime.now(),
         dapAnDaChon: dapAnDaChon,
       );
+      _mistakes[idx] = updated;
+      if (_useRemote) {
+        try {
+          await _firebase.setMistake(updated);
+        } catch (_) {}
+      }
     } else {
       final nextId = _mistakes.isEmpty
           ? 1
           : _mistakes.map((m) => m.id).reduce((a, b) => a > b ? a : b) + 1;
-      _mistakes.add(CauHoiSai(
+      final created = CauHoiSai(
         id: nextId,
         userId: userId,
         maCauHoi: maCauHoi,
         dapAnDaChon: dapAnDaChon,
         lanSai: 1,
         lanCuoiSai: DateTime.now(),
-      ));
+      );
+      _mistakes.add(created);
+      if (_useRemote) {
+        try {
+          await _firebase.setMistake(created);
+        } catch (_) {}
+      }
     }
   }
 
-  void resolveMistake({
+  Future<void> resolveMistake({
     required String userId,
     required int maCauHoi,
-  }) {
+  }) async {
     final idx = _mistakes.indexWhere((m) => m.userId == userId && m.maCauHoi == maCauHoi);
     if (idx != -1) {
       final existing = _mistakes[idx];
       final newLanSai = existing.lanSai - 1;
       if (newLanSai <= 0) {
         _mistakes.removeAt(idx);
+        if (_useRemote) {
+          try {
+            await _firebase.deleteMistake(existing.id);
+          } catch (_) {}
+        }
       } else {
-        _mistakes[idx] = existing.copyWith(lanSai: newLanSai);
+        final updated = existing.copyWith(lanSai: newLanSai);
+        _mistakes[idx] = updated;
+        if (_useRemote) {
+          try {
+            await _firebase.setMistake(updated);
+          } catch (_) {}
+        }
       }
     }
   }
 
-  bool deleteMistake(int id) {
-    final before = _mistakes.length;
-    _mistakes.removeWhere((m) => m.id == id);
-    return _mistakes.length < before;
+  Future<bool> deleteMistake(int id) async {
+    try {
+      lastError = null;
+      if (_useRemote) {
+        await _firebase.deleteMistake(id);
+      }
+      final before = _mistakes.length;
+      _mistakes.removeWhere((m) => m.id == id);
+      return _mistakes.length < before;
+    } catch (e) {
+      lastError = 'Lỗi kết nối mạng khi xóa câu sai: $e';
+      return false;
+    }
   }
 
   // ================= NOTIFICATIONS =================
@@ -632,36 +907,52 @@ class QuizRepository {
     return _notifications.where((n) => (n.userId == null || n.userId == userId) && !n.daDoc).length;
   }
 
-  void markAsRead(int id) {
+  Future<void> markAsRead(int id) async {
     final idx = _notifications.indexWhere((n) => n.id == id);
     if (idx != -1) {
       _notifications[idx] = _notifications[idx].copyWith(daDoc: true);
-    }
-  }
-
-  void markAllAsRead(String? userId) {
-    for (int i = 0; i < _notifications.length; i++) {
-      if (_notifications[i].userId == null || _notifications[i].userId == userId) {
-        _notifications[i] = _notifications[i].copyWith(daDoc: true);
+      if (_useRemote) {
+        try {
+          await _firebase.updateNotification(_notifications[idx]);
+        } catch (_) {}
       }
     }
   }
 
-  void sendNotification({
+  Future<void> markAllAsRead(String? userId) async {
+    for (int i = 0; i < _notifications.length; i++) {
+      if (_notifications[i].userId == null || _notifications[i].userId == userId) {
+        _notifications[i] = _notifications[i].copyWith(daDoc: true);
+        if (_useRemote) {
+          try {
+            await _firebase.updateNotification(_notifications[i]);
+          } catch (_) {}
+        }
+      }
+    }
+  }
+
+  Future<void> sendNotification({
     required String noiDung,
     String? userId,
     String loaiIcon = 'info',
-  }) {
+  }) async {
     final nextId = _notifications.isEmpty
         ? 1
         : _notifications.map((n) => n.id).reduce((a, b) => a > b ? a : b) + 1;
-    _notifications.insert(0, ThongBao(
+    final notif = ThongBao(
       id: nextId,
       userId: userId,
       noiDung: noiDung,
       loaiIcon: loaiIcon,
       daDoc: false,
       thoiGian: DateTime.now(),
-    ));
+    );
+    _notifications.insert(0, notif);
+    if (_useRemote) {
+      try {
+        await _firebase.setNotification(notif);
+      } catch (_) {}
+    }
   }
 }

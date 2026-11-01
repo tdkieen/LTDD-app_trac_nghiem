@@ -25,7 +25,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
   }
 
   /// Hàm thêm chủ đề mới
-  void _addCategory() {
+  Future<void> _addCategory() async {
     final text = _catNameCtrl.text.trim();
     if (text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -35,7 +35,8 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     }
 
     final quiz = context.read<QuizProvider>();
-    final success = quiz.addCategory(text);
+    final success = await quiz.addCategory(text);
+    if (!mounted) return;
     if (success) {
       _catNameCtrl.clear();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -43,7 +44,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Chủ đề này đã tồn tại trong hệ thống!')),
+        SnackBar(content: Text(quiz.errorMessage ?? 'Chủ đề này đã tồn tại trong hệ thống!')),
       );
     }
   }

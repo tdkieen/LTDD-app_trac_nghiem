@@ -289,9 +289,10 @@ class ExamSessionProvider extends ChangeNotifier {
       if (_secondsRemaining <= 0) {
         _timer?.cancel();
         if (!_isSubmitted) {
-          final result = submit(userId: _currentUserId);
-          autoSubmitNotifier.value = result;
-          onTimeUp?.call();
+          submit(userId: _currentUserId).then((result) {
+            autoSubmitNotifier.value = result;
+            onTimeUp?.call();
+          });
         }
       } else {
         if (_secondsRemaining % 5 == 0) {
@@ -337,16 +338,17 @@ class ExamSessionProvider extends ChangeNotifier {
     if (!_isPractice && !_isSubmitted) {
       _cheatWarnings++;
       if (_cheatWarnings >= 3) {
-        final result = submit(userId: userId ?? _currentUserId);
-        autoSubmitNotifier.value = result;
-        onTimeUp?.call();
+        submit(userId: userId ?? _currentUserId).then((result) {
+          autoSubmitNotifier.value = result;
+          onTimeUp?.call();
+        });
       } else {
         notifyListeners();
       }
     }
   }
 
-  KetQuaThi submit({required String userId}) {
+  Future<KetQuaThi> submit({required String userId}) async {
     _timer?.cancel();
     _isSubmitted = true;
     if (_currentExam != null) {
@@ -355,7 +357,7 @@ class ExamSessionProvider extends ChangeNotifier {
 
     final timeSpent = _totalSeconds - _secondsRemaining;
 
-    final result = _repo.submitExam(
+    final result = await _repo.submitExam(
       userId: userId,
       maDeThi: _currentExam?.maDeThi ?? 0,
       answers: _answers,

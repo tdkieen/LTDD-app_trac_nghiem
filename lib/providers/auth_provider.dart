@@ -7,6 +7,7 @@ class AuthProvider extends ChangeNotifier {
   final QuizRepository _repo = QuizRepository();
   AppUser? _currentUser;
   String? _errorMessage;
+  bool _isLoading = false;
 
   AuthProvider() {
     // Start unauthenticated so user sees login/register screen
@@ -19,6 +20,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isTeacher => _currentUser?.isTeacher ?? false;
   bool get isStudent => _currentUser?.isStudent ?? true;
   String? get errorMessage => _errorMessage;
+  bool get isLoading => _isLoading;
 
   void clearError() {
     _errorMessage = null;
@@ -33,21 +35,21 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void switchRole(UserRole newRole) {
+  Future<void> switchRole(UserRole newRole) async {
     if (!kDebugMode || _currentUser == null) return;
     _currentUser = _currentUser!.copyWith(role: newRole);
     _repo.setActiveUser(_currentUser);
-    _repo.updateUser(_currentUser!);
+    await _repo.updateUser(_currentUser!);
     notifyListeners();
   }
 
-  bool changeUserRole(String userId, UserRole newRole) {
+  Future<bool> changeUserRole(String userId, UserRole newRole) async {
     if (!isAdmin) {
       _errorMessage = 'Chỉ Admin mới có quyền thay đổi vai trò người dùng';
       notifyListeners();
       return false;
     }
-    final ok = _repo.changeUserRole(userId, newRole, caller: _currentUser);
+    final ok = await _repo.changeUserRole(userId, newRole, caller: _currentUser);
     if (ok && _currentUser?.id == userId) {
       _currentUser = _currentUser!.copyWith(role: newRole);
       _repo.setActiveUser(_currentUser);
@@ -81,14 +83,14 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  bool register({
+  Future<bool> register({
     required String userName,
     required String email,
     required String password,
     required String fullName,
     String? phoneNumber,
     UserRole role = UserRole.student,
-  }) {
+  }) async {
     _errorMessage = null;
     final u = userName.trim();
     final e = email.trim();
@@ -119,6 +121,9 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
 
+    _isLoading = true;
+    notifyListeners();
+
     final newUser = AppUser(
       id: 'u_${DateTime.now().millisecondsSinceEpoch}',
       userName: u,
@@ -131,7 +136,8 @@ class AuthProvider extends ChangeNotifier {
       avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
     );
 
-    final success = _repo.addUser(newUser);
+    final success = await _repo.addUser(newUser);
+    _isLoading = false;
     if (success) {
       _currentUser = newUser;
       _repo.setActiveUser(_currentUser);
@@ -139,24 +145,25 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } else {
-      _errorMessage = 'Không thể tạo tài khoản, vui lòng thử lại';
+      _errorMessage = _repo.lastError ?? 'Không thể tạo tài khoản, vui lòng thử lại';
       notifyListeners();
       return false;
     }
   }
 
-  void updateProfile({
+  Future<void> updateProfile({
     required String fullName,
     String? phoneNumber,
     double? diemMucTieu,
-  }) {
+  }) async {
     if (_currentUser == null) return;
     _currentUser = _currentUser!.copyWith(
       fullName: fullName.trim(),
       phoneNumber: phoneNumber?.trim(),
       diemMucTieu: diemMucTieu,
     );
-    _repo.updateUser(_currentUser!);
+    _repo.setActiveUser(_currentUser);
+    await _repo.updateUser(_currentUser!);
     notifyListeners();
   }
 

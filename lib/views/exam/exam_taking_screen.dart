@@ -134,11 +134,14 @@ class _ExamTakingScreenState extends State<ExamTakingScreen> with WidgetsBinding
             child: const Text('Tiếp tục làm bài'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(dialogCtx);
               final userId = auth.currentUser?.id ?? 'guest';
-              final result = session.submit(userId: userId);
-              widget.onFinish(result);
+              final result = await session.submit(userId: userId);
+              if (mounted && !_hasFinished) {
+                _hasFinished = true;
+                widget.onFinish(result);
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: const Text('Nộp bài ngay', style: TextStyle(color: Colors.white)),

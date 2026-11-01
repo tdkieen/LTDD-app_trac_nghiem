@@ -53,6 +53,12 @@ class QuizRepository {
   final List<CauHoiSai> _mistakes = [];
   final List<DeThiYeuThich> _bookmarks = [];
   final List<ThongBao> _notifications = [];
+  AppUser? _activeUser;
+
+  AppUser? get activeUser => _activeUser;
+  void setActiveUser(AppUser? user) {
+    _activeUser = user;
+  }
 
   void _init() {
     _users.addAll(MockData.initialUsers);
@@ -101,6 +107,7 @@ class QuizRepository {
         (u) => u.userName.toLowerCase() == query || u.email.toLowerCase() == query,
       );
       if (user.password == password.trim()) {
+        _activeUser = user;
         return user;
       }
       return null;
@@ -118,7 +125,11 @@ class QuizRepository {
     return false;
   }
 
-  bool changeUserRole(String userId, UserRole newRole) {
+  bool changeUserRole(String userId, UserRole newRole, {AppUser? caller}) {
+    final actor = caller ?? _activeUser;
+    if (actor == null || !actor.isAdmin) {
+      return false;
+    }
     final idx = _users.indexWhere((u) => u.id == userId);
     if (idx != -1) {
       _users[idx] = _users[idx].copyWith(role: newRole);

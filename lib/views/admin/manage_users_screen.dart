@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/responsive/responsive_layout.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/app_user.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/quiz_provider.dart';
 
 /// Màn hình Quản Lý Người Dùng & Phân Quyền (QUẢN LÝ)
@@ -271,14 +272,30 @@ class ManageUsersScreen extends StatelessWidget {
           }).toList(),
           onChanged: (newRole) {
             if (newRole != null && newRole != user.role) {
-              context.read<QuizProvider>().changeUserRole(user.id, newRole);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Đã đổi vai trò của "${user.fullName}" thành ${newRole.displayName}.',
+              final auth = context.read<AuthProvider>();
+              if (!auth.isAdmin) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Chỉ Admin mới có quyền thay đổi vai trò người dùng.'),
+                    backgroundColor: AppColors.danger,
                   ),
-                ),
+                );
+                return;
+              }
+              final ok = context.read<QuizProvider>().changeUserRole(
+                user.id,
+                newRole,
+                caller: auth.currentUser,
               );
+              if (ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Đã đổi vai trò của "${user.fullName}" thành ${newRole.displayName}.',
+                    ),
+                  ),
+                );
+              }
             }
           },
         ),

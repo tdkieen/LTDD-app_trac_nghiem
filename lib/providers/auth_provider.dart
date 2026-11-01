@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/app_user.dart';
 import '../services/quiz_repository.dart';
@@ -25,16 +26,34 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void switchUser(AppUser user) {
+    if (!kDebugMode) return;
     _currentUser = user;
+    _repo.setActiveUser(_currentUser);
     _errorMessage = null;
     notifyListeners();
   }
 
   void switchRole(UserRole newRole) {
-    if (_currentUser == null) return;
+    if (!kDebugMode || _currentUser == null) return;
     _currentUser = _currentUser!.copyWith(role: newRole);
+    _repo.setActiveUser(_currentUser);
     _repo.updateUser(_currentUser!);
     notifyListeners();
+  }
+
+  bool changeUserRole(String userId, UserRole newRole) {
+    if (!isAdmin) {
+      _errorMessage = 'Chỉ Admin mới có quyền thay đổi vai trò người dùng';
+      notifyListeners();
+      return false;
+    }
+    final ok = _repo.changeUserRole(userId, newRole, caller: _currentUser);
+    if (ok && _currentUser?.id == userId) {
+      _currentUser = _currentUser!.copyWith(role: newRole);
+      _repo.setActiveUser(_currentUser);
+    }
+    notifyListeners();
+    return ok;
   }
 
   bool login(String usernameOrEmail, String password) {
@@ -51,6 +70,7 @@ class AuthProvider extends ChangeNotifier {
     final user = _repo.authenticate(trimmedUser, trimmedPass);
     if (user != null) {
       _currentUser = user;
+      _repo.setActiveUser(_currentUser);
       _errorMessage = null;
       notifyListeners();
       return true;
@@ -114,6 +134,7 @@ class AuthProvider extends ChangeNotifier {
     final success = _repo.addUser(newUser);
     if (success) {
       _currentUser = newUser;
+      _repo.setActiveUser(_currentUser);
       _errorMessage = null;
       notifyListeners();
       return true;
@@ -141,6 +162,7 @@ class AuthProvider extends ChangeNotifier {
 
   void logout() {
     _currentUser = null;
+    _repo.setActiveUser(null);
     _errorMessage = null;
     notifyListeners();
   }

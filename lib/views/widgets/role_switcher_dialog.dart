@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -9,6 +10,7 @@ class RoleSwitcherDialog extends StatelessWidget {
   const RoleSwitcherDialog({super.key});
 
   static void show(BuildContext context) {
+    if (!kDebugMode) return;
     showDialog(
       context: context,
       builder: (context) => const RoleSwitcherDialog(),
@@ -17,6 +19,7 @@ class RoleSwitcherDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!kDebugMode) return const SizedBox.shrink();
     final auth = context.watch<AuthProvider>();
     final quiz = context.watch<QuizProvider>();
     final allUsers = quiz.getUsers();

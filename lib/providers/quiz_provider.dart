@@ -165,9 +165,14 @@ class QuizProvider extends ChangeNotifier {
     return success;
   }
 
-  void changeUserRole(String userId, UserRole newRole) {
-    _repo.changeUserRole(userId, newRole);
-    notifyListeners();
+  bool changeUserRole(String userId, UserRole newRole, {AppUser? caller}) {
+    final actor = caller ?? _repo.activeUser;
+    if (actor == null || !actor.isAdmin) {
+      return false;
+    }
+    final ok = _repo.changeUserRole(userId, newRole, caller: actor);
+    if (ok) notifyListeners();
+    return ok;
   }
 
   void deleteUser(String userId) {
